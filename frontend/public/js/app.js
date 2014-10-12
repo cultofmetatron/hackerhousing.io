@@ -18656,6 +18656,12 @@ module.exports = require('./lib/React');
 
 },{"./lib/React":28}],146:[function(require,module,exports){
 var react = require('react');
+var menu = require('./views/menu.js');
 
 
-},{"react":145}]},{},[146])
+},{"./views/menu.js":147,"react":145}],147:[function(require,module,exports){
+module.exports = function() {
+  console.log('holy shitmints batman!!');
+};
+
+},{}]},{},[146])

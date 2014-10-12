@@ -5,9 +5,13 @@ var jsx = require('gulp-jsx');
 var browserify = require('gulp-browserify');
 var _ = require('lodash');
 var watch = require('gulp-watch');
+var plumber = require('gulp-plumber');
+
 
 var watcher = function(src, cb) {
-  return cb(gulp.src(src).pipe(watch(src, cb)));
+  return cb(gulp.src(src)
+            .pipe(plumber())
+            .pipe(watch(src, cb)));
 }
 
 /*
@@ -61,6 +65,7 @@ gulp.task('html', function() {
   });
 })
 
+//it just copies shit so we don't really need to run it on fileserves
 gulp.task('fonts', function() {
   return gulp.src('./src/fonts/**/*')
   .pipe(gulp.dest('./public/fonts'))
