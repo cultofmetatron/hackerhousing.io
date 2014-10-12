@@ -93,7 +93,269 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js":[function(require,module,exports){
+},{}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Accordion.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var PanelGroup = require('./PanelGroup');
+
+var Accordion = React.createClass({displayName: 'Accordion',
+  render: function () {
+    return this.transferPropsTo(
+      PanelGroup( {accordion:true}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Accordion;
+},{"./PanelGroup":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PanelGroup.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Affix.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var AffixMixin = require('./AffixMixin');
+var domUtils = require('./utils/domUtils');
+
+var Affix = React.createClass({displayName: 'Affix',
+  statics: {
+    domUtils: domUtils
+  },
+
+  mixins: [AffixMixin],
+
+  render: function () {
+    var holderStyle = {top: this.state.affixPositionTop};
+    return this.transferPropsTo(
+      React.DOM.div( {className:this.state.affixClass, style:holderStyle}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Affix;
+},{"./AffixMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/AffixMixin.js","./utils/domUtils":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/domUtils.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/AffixMixin.js":[function(require,module,exports){
+/* global window, document */
+
+var React = require('react');
+var domUtils = require('./utils/domUtils');
+var EventListener = require('./utils/EventListener');
+
+var AffixMixin = {
+  propTypes: {
+    offset: React.PropTypes.number,
+    offsetTop: React.PropTypes.number,
+    offsetBottom: React.PropTypes.number
+  },
+
+  getInitialState: function () {
+    return {
+      affixClass: 'affix-top'
+    };
+  },
+
+  getPinnedOffset: function (DOMNode) {
+    if (this.pinnedOffset) {
+      return this.pinnedOffset;
+    }
+
+    DOMNode.className = DOMNode.className.replace(/affix-top|affix-bottom|affix/, '');
+    DOMNode.className += DOMNode.className.length ? ' affix' : 'affix';
+
+    this.pinnedOffset = domUtils.getOffset(DOMNode).top - window.pageYOffset;
+
+    return this.pinnedOffset;
+  },
+
+  checkPosition: function () {
+    var DOMNode, scrollHeight, scrollTop, position, offsetTop, offsetBottom,
+        affix, affixType, affixPositionTop;
+
+    // TODO: or not visible
+    if (!this.isMounted()) {
+      return;
+    }
+
+    DOMNode = this.getDOMNode();
+    scrollHeight = document.documentElement.offsetHeight;
+    scrollTop = window.pageYOffset;
+    position = domUtils.getOffset(DOMNode);
+    offsetTop;
+    offsetBottom;
+
+    if (this.affixed === 'top') {
+      position.top += scrollTop;
+    }
+
+    offsetTop = this.props.offsetTop != null ?
+      this.props.offsetTop : this.props.offset;
+    offsetBottom = this.props.offsetBottom != null ?
+      this.props.offsetBottom : this.props.offset;
+
+    if (offsetTop == null && offsetBottom == null) {
+      return;
+    }
+    if (offsetTop == null) {
+      offsetTop = 0;
+    }
+    if (offsetBottom == null) {
+      offsetBottom = 0;
+    }
+
+    if (this.unpin != null && (scrollTop + this.unpin <= position.top)) {
+      affix = false;
+    } else if (offsetBottom != null && (position.top + DOMNode.offsetHeight >= scrollHeight - offsetBottom)) {
+      affix = 'bottom';
+    } else if (offsetTop != null && (scrollTop <= offsetTop)) {
+      affix = 'top';
+    } else {
+      affix = false;
+    }
+
+    if (this.affixed === affix) {
+      return;
+    }
+
+    if (this.unpin != null) {
+      DOMNode.style.top = '';
+    }
+
+    affixType = 'affix' + (affix ? '-' + affix : '');
+
+    this.affixed = affix;
+    this.unpin = affix === 'bottom' ?
+      this.getPinnedOffset(DOMNode) : null;
+
+    if (affix === 'bottom') {
+      DOMNode.className = DOMNode.className.replace(/affix-top|affix-bottom|affix/, 'affix-bottom');
+      affixPositionTop = scrollHeight - offsetBottom - DOMNode.offsetHeight - domUtils.getOffset(DOMNode).top;
+    }
+
+    this.setState({
+      affixClass: affixType,
+      affixPositionTop: affixPositionTop
+    });
+  },
+
+  checkPositionWithEventLoop: function () {
+    setTimeout(this.checkPosition, 0);
+  },
+
+  componentDidMount: function () {
+    this._onWindowScrollListener =
+      EventListener.listen(window, 'scroll', this.checkPosition);
+    this._onDocumentClickListener =
+      EventListener.listen(document, 'click', this.checkPositionWithEventLoop);
+  },
+
+  componentWillUnmount: function () {
+    if (this._onWindowScrollListener) {
+      this._onWindowScrollListener.remove();
+    }
+
+    if (this._onDocumentClickListener) {
+      this._onDocumentClickListener.remove();
+    }
+  },
+
+  componentDidUpdate: function (prevProps, prevState) {
+    if (prevState.affixClass === this.state.affixClass) {
+      this.checkPositionWithEventLoop();
+    }
+  }
+};
+
+module.exports = AffixMixin;
+},{"./utils/EventListener":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/EventListener.js","./utils/domUtils":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/domUtils.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Alert.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+
+
+var Alert = React.createClass({displayName: 'Alert',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    onDismiss: React.PropTypes.func,
+    dismissAfter: React.PropTypes.number
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'alert',
+      bsStyle: 'info'
+    };
+  },
+
+  renderDismissButton: function () {
+    return (
+      React.DOM.button(
+        {type:"button",
+        className:"close",
+        onClick:this.props.onDismiss,
+        'aria-hidden':"true"}, 
+        " × "
+      )
+    );
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+    var isDismissable = !!this.props.onDismiss;
+
+    classes['alert-dismissable'] = isDismissable;
+
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(classes)}, 
+        isDismissable ? this.renderDismissButton() : null,
+        this.props.children
+      )
+    );
+  },
+
+  componentDidMount: function() {
+    if (this.props.dismissAfter && this.props.onDismiss) {
+      this.dismissTimer = setTimeout(this.props.onDismiss, this.props.dismissAfter);
+    }
+  },
+
+  componentWillUnmount: function() {
+    clearTimeout(this.dismissTimer);
+  }
+});
+
+module.exports = Alert;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Badge.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+var classSet = require('./utils/classSet');
+
+var Badge = React.createClass({displayName: 'Badge',
+  propTypes: {
+    pullRight: React.PropTypes.bool,
+  },
+
+  render: function () {
+    var classes = {
+      'pull-right': this.props.pullRight,
+      'badge': ValidComponentChildren.hasValidComponent(this.props.children)
+    };
+    return this.transferPropsTo(
+      React.DOM.span( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Badge;
+
+},{"./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js":[function(require,module,exports){
 var React = require('react');
 var constants = require('./constants');
 
@@ -129,7 +391,625 @@ var BootstrapMixin = {
 };
 
 module.exports = BootstrapMixin;
-},{"./constants":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/constants.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/CollapsableMixin.js":[function(require,module,exports){
+},{"./constants":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/constants.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+var CustomPropTypes = require('./utils/CustomPropTypes');
+
+var Button = React.createClass({displayName: 'Button',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    active:   React.PropTypes.bool,
+    disabled: React.PropTypes.bool,
+    block:    React.PropTypes.bool,
+    navItem:    React.PropTypes.bool,
+    navDropdown: React.PropTypes.bool,
+    componentClass: CustomPropTypes.componentClass
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'button',
+      bsStyle: 'default',
+      type: 'button'
+    };
+  },
+
+  render: function () {
+    var classes = this.props.navDropdown ? {} : this.getBsClassSet();
+    var renderFuncName;
+
+    classes['active'] = this.props.active;
+    classes['btn-block'] = this.props.block;
+
+    if (this.props.navItem) {
+      return this.renderNavItem(classes);
+    }
+
+    renderFuncName = this.props.href || this.props.navDropdown ?
+      'renderAnchor' : 'renderButton';
+
+    return this[renderFuncName](classes);
+  },
+
+  renderAnchor: function (classes) {
+    var component = this.props.componentClass || React.DOM.a;
+    var href = this.props.href || '#';
+    classes['disabled'] = this.props.disabled;
+
+    return this.transferPropsTo(
+      component(
+        {href:href,
+        className:classSet(classes),
+        role:"button"}, 
+        this.props.children
+      )
+    );
+  },
+
+  renderButton: function (classes) {
+    var component = this.props.componentClass || React.DOM.button;
+
+    return this.transferPropsTo(
+      component(
+        {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  },
+
+  renderNavItem: function (classes) {
+    var liClasses = {
+      active: this.props.active
+    };
+
+    return (
+      React.DOM.li( {className:classSet(liClasses)}, 
+        this.renderAnchor(classes)
+      )
+    );
+  }
+});
+
+module.exports = Button;
+
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ButtonGroup.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+var Button = require('./Button');
+
+var ButtonGroup = React.createClass({displayName: 'ButtonGroup',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    vertical:  React.PropTypes.bool,
+    justified: React.PropTypes.bool
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'button-group'
+    };
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+    classes['btn-group'] = !this.props.vertical;
+    classes['btn-group-vertical'] = this.props.vertical;
+    classes['btn-group-justified'] = this.props.justified;
+
+    return this.transferPropsTo(
+      React.DOM.div(
+        {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = ButtonGroup;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Button":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ButtonToolbar.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+var Button = require('./Button');
+
+var ButtonToolbar = React.createClass({displayName: 'ButtonToolbar',
+  mixins: [BootstrapMixin],
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'button-toolbar'
+    };
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+
+    return this.transferPropsTo(
+      React.DOM.div(
+        {role:"toolbar",
+        className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = ButtonToolbar;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Button":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Carousel.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var BootstrapMixin = require('./BootstrapMixin');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+var Carousel = React.createClass({displayName: 'Carousel',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    slide: React.PropTypes.bool,
+    indicators: React.PropTypes.bool,
+    controls: React.PropTypes.bool,
+    pauseOnHover: React.PropTypes.bool,
+    wrap: React.PropTypes.bool,
+    onSelect: React.PropTypes.func,
+    onSlideEnd: React.PropTypes.func,
+    activeIndex: React.PropTypes.number,
+    defaultActiveIndex: React.PropTypes.number,
+    direction: React.PropTypes.oneOf(['prev', 'next'])
+  },
+
+  getDefaultProps: function () {
+    return {
+      slide: true,
+      interval: 5000,
+      pauseOnHover: true,
+      wrap: true,
+      indicators: true,
+      controls: true
+    };
+  },
+
+  getInitialState: function () {
+    return {
+      activeIndex: this.props.defaultActiveIndex == null ?
+        0 : this.props.defaultActiveIndex,
+      previousActiveIndex: null,
+      direction: null
+    };
+  },
+
+  getDirection: function (prevIndex, index) {
+    if (prevIndex === index) {
+      return null;
+    }
+
+    return prevIndex > index ?
+      'prev' : 'next';
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    var activeIndex = this.getActiveIndex();
+
+    if (nextProps.activeIndex != null && nextProps.activeIndex !== activeIndex) {
+      clearTimeout(this.timeout);
+      this.setState({
+        previousActiveIndex: activeIndex,
+        direction: nextProps.direction != null ?
+          nextProps.direction : this.getDirection(activeIndex, nextProps.activeIndex)
+      });
+    }
+  },
+
+  componentDidMount: function () {
+    this.waitForNext();
+  },
+
+  componentWillUnmount: function() {
+    clearTimeout(this.timeout);
+  },
+
+  next: function (e) {
+    if (e) {
+      e.preventDefault();
+    }
+
+    var index = this.getActiveIndex() + 1;
+    var count = ValidComponentChildren.numberOf(this.props.children);
+
+    if (index > count - 1) {
+      if (!this.props.wrap) {
+        return;
+      }
+      index = 0;
+    }
+
+    this.handleSelect(index, 'next');
+  },
+
+  prev: function (e) {
+    if (e) {
+      e.preventDefault();
+    }
+
+    var index = this.getActiveIndex() - 1;
+
+    if (index < 0) {
+      if (!this.props.wrap) {
+        return;
+      }
+      index = ValidComponentChildren.numberOf(this.props.children) - 1;
+    }
+
+    this.handleSelect(index, 'prev');
+  },
+
+  pause: function () {
+    this.isPaused = true;
+    clearTimeout(this.timeout);
+  },
+
+  play: function () {
+    this.isPaused = false;
+    this.waitForNext();
+  },
+
+  waitForNext: function () {
+    if (!this.isPaused && this.props.slide && this.props.interval &&
+        this.props.activeIndex == null) {
+      this.timeout = setTimeout(this.next, this.props.interval);
+    }
+  },
+
+  handleMouseOver: function () {
+    if (this.props.pauseOnHover) {
+      this.pause();
+    }
+  },
+
+  handleMouseOut: function () {
+    if (this.isPaused) {
+      this.play();
+    }
+  },
+
+  render: function () {
+    var classes = {
+      carousel: true,
+      slide: this.props.slide
+    };
+
+    return this.transferPropsTo(
+      React.DOM.div(
+        {className:classSet(classes),
+        onMouseOver:this.handleMouseOver,
+        onMouseOut:this.handleMouseOut}, 
+        this.props.indicators ? this.renderIndicators() : null,
+        React.DOM.div( {className:"carousel-inner", ref:"inner"}, 
+          ValidComponentChildren.map(this.props.children, this.renderItem)
+        ),
+        this.props.controls ? this.renderControls() : null
+      )
+    );
+  },
+
+  renderPrev: function () {
+    return (
+      React.DOM.a( {className:"left carousel-control", href:"#prev", key:0, onClick:this.prev}, 
+        React.DOM.span( {className:"glyphicon glyphicon-chevron-left"} )
+      )
+    );
+  },
+
+  renderNext: function () {
+    return (
+      React.DOM.a( {className:"right carousel-control", href:"#next", key:1, onClick:this.next}, 
+        React.DOM.span( {className:"glyphicon glyphicon-chevron-right"})
+      )
+    );
+  },
+
+  renderControls: function () {
+    if (this.props.wrap) {
+      var activeIndex = this.getActiveIndex();
+      var count = ValidComponentChildren.numberOf(this.props.children);
+
+      return [
+        (activeIndex !== 0) ? this.renderPrev() : null,
+        (activeIndex !== count - 1) ? this.renderNext() : null
+      ];
+    }
+
+    return [
+      this.renderPrev(),
+      this.renderNext()
+    ];
+  },
+
+  renderIndicator: function (child, index) {
+    var className = (index === this.getActiveIndex()) ?
+      'active' : null;
+
+    return (
+      React.DOM.li(
+        {key:index,
+        className:className,
+        onClick:this.handleSelect.bind(this, index, null)} )
+    );
+  },
+
+  renderIndicators: function () {
+    var indicators = [];
+    ValidComponentChildren
+      .forEach(this.props.children, function(child, index) {
+        indicators.push(
+          this.renderIndicator(child, index),
+
+          // Force whitespace between indicator elements, bootstrap
+          // requires this for correct spacing of elements.
+          ' '
+        );
+      }, this);
+
+    return (
+      React.DOM.ol( {className:"carousel-indicators"}, 
+        indicators
+      )
+    );
+  },
+
+  getActiveIndex: function () {
+    return this.props.activeIndex != null ? this.props.activeIndex : this.state.activeIndex;
+  },
+
+  handleItemAnimateOutEnd: function () {
+    this.setState({
+      previousActiveIndex: null,
+      direction: null
+    }, function() {
+      this.waitForNext();
+
+      if (this.props.onSlideEnd) {
+        this.props.onSlideEnd();
+      }
+    });
+  },
+
+  renderItem: function (child, index) {
+    var activeIndex = this.getActiveIndex();
+    var isActive = (index === activeIndex);
+    var isPreviousActive = this.state.previousActiveIndex != null &&
+            this.state.previousActiveIndex === index && this.props.slide;
+
+    return cloneWithProps(
+        child,
+        {
+          active: isActive,
+          ref: child.props.ref,
+          key: child.props.key != null ?
+            child.props.key : index,
+          index: index,
+          animateOut: isPreviousActive,
+          animateIn: isActive && this.state.previousActiveIndex != null && this.props.slide,
+          direction: this.state.direction,
+          onAnimateOutEnd: isPreviousActive ? this.handleItemAnimateOutEnd: null
+        }
+      );
+  },
+
+  handleSelect: function (index, direction) {
+    clearTimeout(this.timeout);
+
+    var previousActiveIndex = this.getActiveIndex();
+    direction = direction || this.getDirection(previousActiveIndex, index);
+
+    if (this.props.onSelect) {
+      this.props.onSelect(index, direction);
+    }
+
+    if (this.props.activeIndex == null && index !== previousActiveIndex) {
+      if (this.state.previousActiveIndex != null) {
+        // If currently animating don't activate the new index.
+        // TODO: look into queuing this canceled call and
+        // animating after the current animation has ended.
+        return;
+      }
+
+      this.setState({
+        activeIndex: index,
+        previousActiveIndex: previousActiveIndex,
+        direction: direction
+      });
+    }
+  }
+});
+
+module.exports = Carousel;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/CarouselItem.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var TransitionEvents = require('./utils/TransitionEvents');
+
+var CarouselItem = React.createClass({displayName: 'CarouselItem',
+  propTypes: {
+    direction: React.PropTypes.oneOf(['prev', 'next']),
+    onAnimateOutEnd: React.PropTypes.func,
+    active: React.PropTypes.bool,
+    caption: React.PropTypes.renderable
+  },
+
+  getInitialState: function () {
+    return {
+      direction: null
+    };
+  },
+
+  getDefaultProps: function () {
+    return {
+      animation: true
+    };
+  },
+
+  handleAnimateOutEnd: function () {
+    if (this.props.onAnimateOutEnd && this.isMounted()) {
+      this.props.onAnimateOutEnd(this.props.index);
+    }
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    if (this.props.active !== nextProps.active) {
+      this.setState({
+        direction: null
+      });
+    }
+  },
+
+  componentDidUpdate: function (prevProps) {
+    if (!this.props.active && prevProps.active) {
+      TransitionEvents.addEndEventListener(
+        this.getDOMNode(),
+        this.handleAnimateOutEnd
+      );
+    }
+
+    if (this.props.active !== prevProps.active) {
+      setTimeout(this.startAnimation, 20);
+    }
+  },
+
+  startAnimation: function () {
+    if (!this.isMounted()) {
+      return;
+    }
+
+    this.setState({
+      direction: this.props.direction === 'prev' ?
+        'right' : 'left'
+    });
+  },
+
+  render: function () {
+    var classes = {
+      item: true,
+      active: (this.props.active && !this.props.animateIn) || this.props.animateOut,
+      next: this.props.active && this.props.animateIn && this.props.direction === 'next',
+      prev: this.props.active && this.props.animateIn && this.props.direction === 'prev'
+    };
+
+    if (this.state.direction && (this.props.animateIn || this.props.animateOut)) {
+      classes[this.state.direction] = true;
+    }
+
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(classes)}, 
+        this.props.children,
+        this.props.caption ? this.renderCaption() : null
+      )
+    );
+  },
+
+  renderCaption: function () {
+    return (
+      React.DOM.div( {className:"carousel-caption"}, 
+        this.props.caption
+      )
+    );
+  }
+});
+
+module.exports = CarouselItem;
+},{"./utils/TransitionEvents":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/TransitionEvents.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Col.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var CustomPropTypes = require('./utils/CustomPropTypes');
+var constants = require('./constants');
+
+
+var Col = React.createClass({displayName: 'Col',
+  propTypes: {
+    xs: React.PropTypes.number,
+    sm: React.PropTypes.number,
+    md: React.PropTypes.number,
+    lg: React.PropTypes.number,
+    xsOffset: React.PropTypes.number,
+    smOffset: React.PropTypes.number,
+    mdOffset: React.PropTypes.number,
+    lgOffset: React.PropTypes.number,
+    xsPush: React.PropTypes.number,
+    smPush: React.PropTypes.number,
+    mdPush: React.PropTypes.number,
+    lgPush: React.PropTypes.number,
+    xsPull: React.PropTypes.number,
+    smPull: React.PropTypes.number,
+    mdPull: React.PropTypes.number,
+    lgPull: React.PropTypes.number,
+    componentClass: CustomPropTypes.componentClass.isRequired
+  },
+
+  getDefaultProps: function () {
+    return {
+      componentClass: React.DOM.div
+    };
+  },
+
+  render: function () {
+    var componentClass = this.props.componentClass;
+    var classes = {};
+
+    Object.keys(constants.SIZES).forEach(function (key) {
+      var size = constants.SIZES[key];
+      var prop = size;
+      var classPart = size + '-';
+
+      if (this.props[prop]) {
+        classes['col-' + classPart + this.props[prop]] = true;
+      }
+
+      prop = size + 'Offset';
+      classPart = size + '-offset-';
+      if (this.props[prop]) {
+        classes['col-' + classPart + this.props[prop]] = true;
+      }
+
+      prop = size + 'Push';
+      classPart = size + '-push-';
+      if (this.props[prop]) {
+        classes['col-' + classPart + this.props[prop]] = true;
+      }
+
+      prop = size + 'Pull';
+      classPart = size + '-pull-';
+      if (this.props[prop]) {
+        classes['col-' + classPart + this.props[prop]] = true;
+      }
+    }, this);
+
+    return this.transferPropsTo(
+      componentClass( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Col;
+},{"./constants":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/constants.js","./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/CollapsableMixin.js":[function(require,module,exports){
 var React = require('react');
 var TransitionEvents = require('./utils/TransitionEvents');
 
@@ -260,7 +1140,1131 @@ var CollapsableMixin = {
 };
 
 module.exports = CollapsableMixin;
-},{"./utils/TransitionEvents":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/TransitionEvents.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js":[function(require,module,exports){
+},{"./utils/TransitionEvents":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/TransitionEvents.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownButton.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var createChainedFunction = require('./utils/createChainedFunction');
+var BootstrapMixin = require('./BootstrapMixin');
+var DropdownStateMixin = require('./DropdownStateMixin');
+var Button = require('./Button');
+var ButtonGroup = require('./ButtonGroup');
+var DropdownMenu = require('./DropdownMenu');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+
+var DropdownButton = React.createClass({displayName: 'DropdownButton',
+  mixins: [BootstrapMixin, DropdownStateMixin],
+
+  propTypes: {
+    pullRight: React.PropTypes.bool,
+    dropup:    React.PropTypes.bool,
+    title:     React.PropTypes.renderable,
+    href:      React.PropTypes.string,
+    onClick:   React.PropTypes.func,
+    onSelect:  React.PropTypes.func,
+    navItem:   React.PropTypes.bool
+  },
+
+  render: function () {
+    var className = 'dropdown-toggle';
+
+    var renderMethod = this.props.navItem ?
+      'renderNavItem' : 'renderButtonGroup';
+
+    return this[renderMethod]([
+      this.transferPropsTo(Button(
+        {ref:"dropdownButton",
+        className:className,
+        onClick:this.handleDropdownClick,
+        key:0,
+        navDropdown:this.props.navItem,
+        navItem:null,
+        title:null,
+        pullRight:null,
+        dropup:null}, 
+        this.props.title,' ',
+        React.DOM.span( {className:"caret"} )
+      )),
+      DropdownMenu(
+        {ref:"menu",
+        'aria-labelledby':this.props.id,
+        pullRight:this.props.pullRight,
+        key:1}, 
+        ValidComponentChildren.map(this.props.children, this.renderMenuItem)
+      )
+    ]);
+  },
+
+  renderButtonGroup: function (children) {
+    var groupClasses = {
+        'open': this.state.open,
+        'dropup': this.props.dropup
+      };
+
+    return (
+      ButtonGroup(
+        {bsSize:this.props.bsSize,
+        className:classSet(groupClasses)}, 
+        children
+      )
+    );
+  },
+
+  renderNavItem: function (children) {
+    var classes = {
+        'dropdown': true,
+        'open': this.state.open,
+        'dropup': this.props.dropup
+      };
+
+    return (
+      React.DOM.li( {className:classSet(classes)}, 
+        children
+      )
+    );
+  },
+
+  renderMenuItem: function (child) {
+    // Only handle the option selection if an onSelect prop has been set on the
+    // component or it's child, this allows a user not to pass an onSelect
+    // handler and have the browser preform the default action.
+    var handleOptionSelect = this.props.onSelect || child.props.onSelect ?
+      this.handleOptionSelect : null;
+
+    return cloneWithProps(
+      child,
+      {
+        // Capture onSelect events
+        onSelect: createChainedFunction(child.props.onSelect, handleOptionSelect),
+
+        // Force special props to be transferred
+        key: child.props.key,
+        ref: child.props.ref
+      }
+    );
+  },
+
+  handleDropdownClick: function (e) {
+    e.preventDefault();
+
+    this.setDropdownState(!this.state.open);
+  },
+
+  handleOptionSelect: function (key) {
+    if (this.props.onSelect) {
+      this.props.onSelect(key);
+    }
+
+    this.setDropdownState(false);
+  }
+});
+
+module.exports = DropdownButton;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Button":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js","./ButtonGroup":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ButtonGroup.js","./DropdownMenu":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownMenu.js","./DropdownStateMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownStateMixin.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownMenu.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var createChainedFunction = require('./utils/createChainedFunction');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+var DropdownMenu = React.createClass({displayName: 'DropdownMenu',
+  propTypes: {
+    pullRight: React.PropTypes.bool,
+    onSelect: React.PropTypes.func
+  },
+
+  render: function () {
+    var classes = {
+        'dropdown-menu': true,
+        'dropdown-menu-right': this.props.pullRight
+      };
+
+    return this.transferPropsTo(
+        React.DOM.ul(
+          {className:classSet(classes),
+          role:"menu"}, 
+          ValidComponentChildren.map(this.props.children, this.renderMenuItem)
+        )
+      );
+  },
+
+  renderMenuItem: function (child) {
+    return cloneWithProps(
+      child,
+      {
+        // Capture onSelect events
+        onSelect: createChainedFunction(child.props.onSelect, this.props.onSelect),
+
+        // Force special props to be transferred
+        key: child.props.key,
+        ref: child.props.ref
+      }
+    );
+  }
+});
+
+module.exports = DropdownMenu;
+},{"./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownStateMixin.js":[function(require,module,exports){
+var React = require('react');
+var EventListener = require('./utils/EventListener');
+
+/**
+ * Checks whether a node is within
+ * a root nodes tree
+ *
+ * @param {DOMElement} node
+ * @param {DOMElement} root
+ * @returns {boolean}
+ */
+function isNodeInRoot(node, root) {
+  while (node) {
+    if (node === root) {
+      return true;
+    }
+    node = node.parentNode;
+  }
+
+  return false;
+}
+
+var DropdownStateMixin = {
+  getInitialState: function () {
+    return {
+      open: false
+    };
+  },
+
+  setDropdownState: function (newState, onStateChangeComplete) {
+    if (newState) {
+      this.bindRootCloseHandlers();
+    } else {
+      this.unbindRootCloseHandlers();
+    }
+
+    this.setState({
+      open: newState
+    }, onStateChangeComplete);
+  },
+
+  handleDocumentKeyUp: function (e) {
+    if (e.keyCode === 27) {
+      this.setDropdownState(false);
+    }
+  },
+
+  handleDocumentClick: function (e) {
+    // If the click originated from within this component
+    // don't do anything.
+    if (isNodeInRoot(e.target, this.getDOMNode())) {
+      return;
+    }
+
+    this.setDropdownState(false);
+  },
+
+  bindRootCloseHandlers: function () {
+    this._onDocumentClickListener =
+      EventListener.listen(document, 'click', this.handleDocumentClick);
+    this._onDocumentKeyupListener =
+      EventListener.listen(document, 'keyup', this.handleDocumentKeyUp);
+  },
+
+  unbindRootCloseHandlers: function () {
+    if (this._onDocumentClickListener) {
+      this._onDocumentClickListener.remove();
+    }
+
+    if (this._onDocumentKeyupListener) {
+      this._onDocumentKeyupListener.remove();
+    }
+  },
+
+  componentWillUnmount: function () {
+    this.unbindRootCloseHandlers();
+  }
+};
+
+module.exports = DropdownStateMixin;
+},{"./utils/EventListener":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/EventListener.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Dropdownbutton.js":[function(require,module,exports){
+module.exports=require("/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownButton.js")
+},{"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownButton.js":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownButton.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/FadeMixin.js":[function(require,module,exports){
+var React = require('react');
+
+// TODO: listen for onTransitionEnd to remove el
+module.exports = {
+  _fadeIn: function () {
+    var els;
+
+    if (this.isMounted()) {
+      els = this.getDOMNode().querySelectorAll('.fade');
+      if (els.length) {
+        Array.prototype.forEach.call(els, function (el) {
+          el.className += ' in';
+        });
+      }
+    }
+  },
+
+  _fadeOut: function () {
+    var els = this._fadeOutEl.querySelectorAll('.fade.in');
+
+    if (els.length) {
+      Array.prototype.forEach.call(els, function (el) {
+        el.className = el.className.replace(/\bin\b/, '');
+      });
+    }
+
+    setTimeout(this._handleFadeOutEnd, 300);
+  },
+
+  _handleFadeOutEnd: function () {
+    if (this._fadeOutEl && this._fadeOutEl.parentNode) {
+      this._fadeOutEl.parentNode.removeChild(this._fadeOutEl);
+    }
+  },
+
+  componentDidMount: function () {
+    if (document.querySelectorAll) {
+      // Firefox needs delay for transition to be triggered
+      setTimeout(this._fadeIn, 20);
+    }
+  },
+
+  componentWillUnmount: function () {
+    var els = this.getDOMNode().querySelectorAll('.fade');
+    if (els.length) {
+      this._fadeOutEl = document.createElement('div');
+      document.body.appendChild(this._fadeOutEl);
+      this._fadeOutEl.appendChild(this.getDOMNode().cloneNode(true));
+      // Firefox needs delay for transition to be triggered
+      setTimeout(this._fadeOut, 20);
+    }
+  }
+};
+
+},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Glyphicon.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+var constants = require('./constants');
+
+var Glyphicon = React.createClass({displayName: 'Glyphicon',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    glyph: React.PropTypes.oneOf(constants.GLYPHS).isRequired
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'glyphicon'
+    };
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+
+    classes['glyphicon-' + this.props.glyph] = true;
+
+    return this.transferPropsTo(
+      React.DOM.span( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Glyphicon;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./constants":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/constants.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Grid.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var CustomPropTypes = require('./utils/CustomPropTypes');
+
+
+var Grid = React.createClass({displayName: 'Grid',
+  propTypes: {
+    fluid: React.PropTypes.bool,
+    componentClass: CustomPropTypes.componentClass.isRequired
+  },
+
+  getDefaultProps: function () {
+    return {
+      componentClass: React.DOM.div
+    };
+  },
+
+  render: function () {
+    var componentClass = this.props.componentClass;
+
+    return this.transferPropsTo(
+      componentClass( {className:this.props.fluid ? 'container-fluid' : 'container'}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Grid;
+},{"./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Input.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var Button = require('./Button');
+
+var Input = React.createClass({displayName: 'Input',
+  propTypes: {
+    type: React.PropTypes.string,
+    label: React.PropTypes.renderable,
+    help: React.PropTypes.renderable,
+    addonBefore: React.PropTypes.renderable,
+    addonAfter: React.PropTypes.renderable,
+    bsStyle: function(props) {
+      if (props.type === 'submit') {
+        // Return early if `type=submit` as the `Button` component
+        // it transfers these props to has its own propType checks.
+        return;
+      }
+
+      return React.PropTypes.oneOf(['success', 'warning', 'error']).apply(null, arguments);
+    },
+    hasFeedback: React.PropTypes.bool,
+    groupClassName: React.PropTypes.string,
+    wrapperClassName: React.PropTypes.string,
+    labelClassName: React.PropTypes.string
+  },
+
+  getInputDOMNode: function () {
+    return this.refs.input.getDOMNode();
+  },
+
+  getValue: function () {
+    if (this.props.type === 'static') {
+      return this.props.value;
+    }
+    else if (this.props.type) {
+      return this.getInputDOMNode().value;
+    }
+    else {
+      throw Error('Cannot use getValue without specifying input type.');
+    }
+  },
+
+  getChecked: function () {
+    return this.getInputDOMNode().checked;
+  },
+
+  isCheckboxOrRadio: function () {
+    return this.props.type === 'radio' || this.props.type === 'checkbox';
+  },
+
+  renderInput: function () {
+    var input = null;
+
+    if (!this.props.type) {
+      return this.props.children
+    }
+
+    switch (this.props.type) {
+      case 'select':
+        input = (
+          React.DOM.select( {className:"form-control", ref:"input", key:"input"}, 
+            this.props.children
+          )
+        );
+        break;
+      case 'textarea':
+        input = React.DOM.textarea( {className:"form-control", ref:"input", key:"input"} );
+        break;
+      case 'static':
+        input = (
+          React.DOM.p( {className:"form-control-static", ref:"input",  key:"input"}, 
+            this.props.value
+          )
+        );
+        break;
+      case 'submit':
+        input = this.transferPropsTo(
+          Button( {componentClass:React.DOM.input} )
+        );
+        break;
+      default:
+        var className = this.isCheckboxOrRadio() ? '' : 'form-control';
+        input = React.DOM.input( {className:className, ref:"input", key:"input"} );
+    }
+
+    return this.transferPropsTo(input);
+  },
+
+  renderInputGroup: function (children) {
+    var addonBefore = this.props.addonBefore ? (
+      React.DOM.span( {className:"input-group-addon", key:"addonBefore"}, 
+        this.props.addonBefore
+      )
+    ) : null;
+
+    var addonAfter = this.props.addonAfter ? (
+      React.DOM.span( {className:"input-group-addon", key:"addonAfter"}, 
+        this.props.addonAfter
+      )
+    ) : null;
+
+    return addonBefore || addonAfter ? (
+      React.DOM.div( {className:"input-group", key:"input-group"}, 
+        addonBefore,
+        children,
+        addonAfter
+      )
+    ) : children;
+  },
+
+  renderIcon: function () {
+    var classes = {
+      'glyphicon': true,
+      'form-control-feedback': true,
+      'glyphicon-ok': this.props.bsStyle === 'success',
+      'glyphicon-warning-sign': this.props.bsStyle === 'warning',
+      'glyphicon-remove': this.props.bsStyle === 'error'
+    };
+
+    return this.props.hasFeedback ? (
+      React.DOM.span( {className:classSet(classes), key:"icon"} )
+    ) : null;
+  },
+
+  renderHelp: function () {
+    return this.props.help ? (
+      React.DOM.span( {className:"help-block", key:"help"}, 
+        this.props.help
+      )
+    ) : null;
+  },
+
+  renderCheckboxandRadioWrapper: function (children) {
+    var classes = {
+      'checkbox': this.props.type === 'checkbox',
+      'radio': this.props.type === 'radio'
+    };
+
+    return (
+      React.DOM.div( {className:classSet(classes), key:"checkboxRadioWrapper"}, 
+        children
+      )
+    );
+  },
+
+  renderWrapper: function (children) {
+    return this.props.wrapperClassName ? (
+      React.DOM.div( {className:this.props.wrapperClassName, key:"wrapper"}, 
+        children
+      )
+    ) : children;
+  },
+
+  renderLabel: function (children) {
+    var classes = {
+      'control-label': !this.isCheckboxOrRadio()
+    };
+    classes[this.props.labelClassName] = this.props.labelClassName;
+
+    return this.props.label ? (
+      React.DOM.label( {htmlFor:this.props.id, className:classSet(classes), key:"label"}, 
+        children,
+        this.props.label
+      )
+    ) : children;
+  },
+
+  renderFormGroup: function (children) {
+    var classes = {
+      'form-group': true,
+      'has-feedback': this.props.hasFeedback,
+      'has-success': this.props.bsStyle === 'success',
+      'has-warning': this.props.bsStyle === 'warning',
+      'has-error': this.props.bsStyle === 'error'
+    };
+    classes[this.props.groupClassName] = this.props.groupClassName;
+
+    return (
+      React.DOM.div( {className:classSet(classes)}, 
+        children
+      )
+    );
+  },
+
+  render: function () {
+    if (this.isCheckboxOrRadio()) {
+      return this.renderFormGroup(
+        this.renderWrapper([
+          this.renderCheckboxandRadioWrapper(
+            this.renderLabel(
+              this.renderInput()
+            )
+          ),
+          this.renderHelp()
+        ])
+      );
+    }
+    else {
+      return this.renderFormGroup([
+        this.renderLabel(),
+        this.renderWrapper([
+          this.renderInputGroup(
+            this.renderInput()
+          ),
+          this.renderIcon(),
+          this.renderHelp()
+        ])
+      ]);
+    }
+  }
+});
+
+module.exports = Input;
+
+},{"./Button":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Interpolate.js":[function(require,module,exports){
+// https://www.npmjs.org/package/react-interpolate-component
+'use strict';
+
+var React = require('react');
+var merge = require('./utils/merge');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+var REGEXP = /\%\((.+?)\)s/;
+
+var Interpolate = React.createClass({
+  displayName: 'Interpolate',
+
+  propTypes: {
+    format: React.PropTypes.string
+  },
+
+  getDefaultProps: function() {
+    return { component: React.DOM.span };
+  },
+
+  render: function() {
+    var format = ValidComponentChildren.hasValidComponent(this.props.children) ? this.props.children : this.props.format;
+    var parent = this.props.component;
+    var unsafe = this.props.unsafe === true;
+    var props = merge(this.props);
+
+    delete props.children;
+    delete props.format;
+    delete props.component;
+    delete props.unsafe;
+
+    if (unsafe) {
+      var content = format.split(REGEXP).reduce(function(memo, match, index) {
+        var html;
+
+        if (index % 2 === 0) {
+          html = match;
+        } else {
+          html = props[match];
+          delete props[match];
+        }
+
+        if (React.isValidComponent(html)) {
+          throw new Error('cannot interpolate a React component into unsafe text');
+        }
+
+        memo += html;
+
+        return memo;
+      }, '');
+
+      props.dangerouslySetInnerHTML = { __html: content };
+
+      return parent(props);
+    } else {
+      var args = format.split(REGEXP).reduce(function(memo, match, index) {
+        var child;
+
+        if (index % 2 === 0) {
+          if (match.length === 0) {
+            return memo;
+          }
+
+          child = match;
+        } else {
+          child = props[match];
+          delete props[match];
+        }
+
+        memo.push(child);
+
+        return memo;
+      }, [props]);
+
+      return parent.apply(null, args);
+    }
+  }
+});
+
+module.exports = Interpolate;
+
+},{"./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/merge":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/merge.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Jumbotron.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+
+var Jumbotron = React.createClass({displayName: 'Jumbotron',
+
+  render: function () {
+    return this.transferPropsTo(
+      React.DOM.div( {className:"jumbotron"}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Jumbotron;
+},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Label.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+
+var Label = React.createClass({displayName: 'Label',
+  mixins: [BootstrapMixin],
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'label',
+      bsStyle: 'default'
+    };
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+
+    return this.transferPropsTo(
+      React.DOM.span( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Label;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ListGroup.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+var createChainedFunction = require('./utils/createChainedFunction');
+
+var ListGroup = React.createClass({displayName: 'ListGroup',
+  propTypes: {
+    onClick: React.PropTypes.func
+  },
+
+  render: function () {
+    return (
+      React.DOM.div( {className:"list-group"}, 
+        ValidComponentChildren.map(this.props.children, this.renderListItem)
+      )
+    );
+  },
+
+  renderListItem: function (child) {
+    return cloneWithProps(child, {
+      onClick: createChainedFunction(child.props.onClick, this.props.onClick),
+      ref: child.props.ref,
+      key: child.props.key
+    });
+  }
+});
+
+module.exports = ListGroup;
+
+},{"./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ListGroupItem.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var BootstrapMixin = require('./BootstrapMixin');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+var ListGroupItem = React.createClass({displayName: 'ListGroupItem',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    bsStyle: React.PropTypes.oneOf(['danger','info','success','warning']),
+    active: React.PropTypes.any,
+    disabled: React.PropTypes.any,
+    header: React.PropTypes.renderable,
+    onClick: React.PropTypes.func
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'list-group-item'
+    };
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+
+    classes['active'] = this.props.active;
+    classes['disabled'] = this.props.disabled;
+
+    if (this.props.href || this.props.onClick) {
+      return this.renderAnchor(classes);
+    } else {
+      return this.renderSpan(classes);
+    }
+  },
+
+  renderSpan: function (classes) {
+    return this.transferPropsTo(
+      React.DOM.span( {className:classSet(classes)}, 
+        this.props.header ? this.renderStructuredContent() : this.props.children
+      )
+    );
+  },
+
+  renderAnchor: function (classes) {
+    return this.transferPropsTo(
+      React.DOM.a(
+        {className:classSet(classes),
+        onClick:this.handleClick}, 
+        this.props.header ? this.renderStructuredContent() : this.props.children
+      )
+    );
+  },
+
+  renderStructuredContent: function () {
+    var header;
+    if (React.isValidComponent(this.props.header)) {
+      header = cloneWithProps(this.props.header, {
+        className: 'list-group-item-heading'
+      });
+    } else {
+      header = (
+        React.DOM.h4( {className:"list-group-item-heading"}, 
+          this.props.header
+        )
+      );
+    }
+
+    var content = (
+      React.DOM.p( {className:"list-group-item-text"}, 
+        this.props.children
+      )
+    );
+
+    return {
+      header: header,
+      content: content
+    };
+  },
+
+  handleClick: function (e) {
+    if (this.props.onClick) {
+      e.preventDefault();
+      this.props.onClick(this.props.key, this.props.href);
+    }
+  }
+});
+
+module.exports = ListGroupItem;
+
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/MenuItem.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+
+var MenuItem = React.createClass({displayName: 'MenuItem',
+  propTypes: {
+    header:   React.PropTypes.bool,
+    divider:  React.PropTypes.bool,
+    href:     React.PropTypes.string,
+    title:    React.PropTypes.string,
+    onSelect: React.PropTypes.func
+  },
+
+  getDefaultProps: function () {
+    return {
+      href: '#'
+    };
+  },
+
+  handleClick: function (e) {
+    if (this.props.onSelect) {
+      e.preventDefault();
+      this.props.onSelect(this.props.key);
+    }
+  },
+
+  renderAnchor: function () {
+    return (
+      React.DOM.a( {onClick:this.handleClick, href:this.props.href, title:this.props.title, tabIndex:"-1"}, 
+        this.props.children
+      )
+    );
+  },
+
+  render: function () {
+    var classes = {
+        'dropdown-header': this.props.header,
+        'divider': this.props.divider
+      };
+
+    var children = null;
+    if (this.props.header) {
+      children = this.props.children;
+    } else if (!this.props.divider) {
+      children = this.renderAnchor();
+    }
+
+    return this.transferPropsTo(
+      React.DOM.li( {role:"presentation", title:null, href:null, className:classSet(classes)}, 
+        children
+      )
+    );
+  }
+});
+
+module.exports = MenuItem;
+},{"./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Modal.js":[function(require,module,exports){
+/** @jsx React.DOM */
+/* global document:false */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+var FadeMixin = require('./FadeMixin');
+var EventListener = require('./utils/EventListener');
+
+
+// TODO:
+// - aria-labelledby
+// - Add `modal-body` div if only one child passed in that doesn't already have it
+// - Tests
+
+var Modal = React.createClass({displayName: 'Modal',
+  mixins: [BootstrapMixin, FadeMixin],
+
+  propTypes: {
+    title: React.PropTypes.renderable,
+    backdrop: React.PropTypes.oneOf(['static', true, false]),
+    keyboard: React.PropTypes.bool,
+    closeButton: React.PropTypes.bool,
+    animation: React.PropTypes.bool,
+    onRequestHide: React.PropTypes.func.isRequired
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'modal',
+      backdrop: true,
+      keyboard: true,
+      animation: true,
+      closeButton: true
+    };
+  },
+
+  render: function () {
+    var modalStyle = {display: 'block'};
+    var dialogClasses = this.getBsClassSet();
+    delete dialogClasses.modal;
+    dialogClasses['modal-dialog'] = true;
+
+    var classes = {
+      modal: true,
+      fade: this.props.animation,
+      'in': !this.props.animation || !document.querySelectorAll
+    };
+
+    var modal = this.transferPropsTo(
+      React.DOM.div(
+        {title:null,
+        tabIndex:"-1",
+        role:"dialog",
+        style:modalStyle,
+        className:classSet(classes),
+        onClick:this.props.backdrop === true ? this.handleBackdropClick : null,
+        ref:"modal"}, 
+        React.DOM.div( {className:classSet(dialogClasses)}, 
+          React.DOM.div( {className:"modal-content"}, 
+            this.props.title ? this.renderHeader() : null,
+            this.props.children
+          )
+        )
+      )
+    );
+
+    return this.props.backdrop ?
+      this.renderBackdrop(modal) : modal;
+  },
+
+  renderBackdrop: function (modal) {
+    var classes = {
+      'modal-backdrop': true,
+      'fade': this.props.animation
+    };
+
+    classes['in'] = !this.props.animation || !document.querySelectorAll;
+
+    var onClick = this.props.backdrop === true ?
+      this.handleBackdropClick : null;
+
+    return (
+      React.DOM.div(null, 
+        React.DOM.div( {className:classSet(classes), ref:"backdrop", onClick:onClick} ),
+        modal
+      )
+    );
+  },
+
+  renderHeader: function () {
+    var closeButton;
+    if (this.props.closeButton) {
+      closeButton = (
+          React.DOM.button( {type:"button", className:"close", 'aria-hidden':"true", onClick:this.props.onRequestHide}, "×")
+        );
+    }
+
+    return (
+      React.DOM.div( {className:"modal-header"}, 
+        closeButton,
+        this.renderTitle()
+      )
+    );
+  },
+
+  renderTitle: function () {
+    return (
+      React.isValidComponent(this.props.title) ?
+        this.props.title : React.DOM.h4( {className:"modal-title"}, this.props.title)
+    );
+  },
+
+  iosClickHack: function () {
+    // IOS only allows click events to be delegated to the document on elements
+    // it considers 'clickable' - anchors, buttons, etc. We fake a click handler on the
+    // DOM nodes themselves. Remove if handled by React: https://github.com/facebook/react/issues/1169
+    this.refs.modal.getDOMNode().onclick = function () {};
+    this.refs.backdrop.getDOMNode().onclick = function () {};
+  },
+
+  componentDidMount: function () {
+    this._onDocumentKeyupListener =
+      EventListener.listen(document, 'keyup', this.handleDocumentKeyUp);
+
+    if (this.props.backdrop) {
+      this.iosClickHack();
+    }
+  },
+
+  componentDidUpdate: function (prevProps) {
+    if (this.props.backdrop && this.props.backdrop !== prevProps.backdrop) {
+      this.iosClickHack();
+    }
+  },
+
+  componentWillUnmount: function () {
+    this._onDocumentKeyupListener.remove();
+  },
+
+  handleBackdropClick: function (e) {
+    if (e.target !== e.currentTarget) {
+      return;
+    }
+
+    this.props.onRequestHide();
+  },
+
+  handleDocumentKeyUp: function (e) {
+    if (this.props.keyboard && e.keyCode === 27) {
+      this.props.onRequestHide();
+    }
+  }
+});
+
+module.exports = Modal;
+
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./FadeMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/FadeMixin.js","./utils/EventListener":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/EventListener.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ModalTrigger.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var OverlayMixin = require('./OverlayMixin');
+var cloneWithProps = require('./utils/cloneWithProps');
+var createChainedFunction = require('./utils/createChainedFunction');
+
+var ModalTrigger = React.createClass({displayName: 'ModalTrigger',
+  mixins: [OverlayMixin],
+
+  propTypes: {
+    modal: React.PropTypes.renderable.isRequired
+  },
+
+  getInitialState: function () {
+    return {
+      isOverlayShown: false
+    };
+  },
+
+  show: function () {
+    this.setState({
+      isOverlayShown: true
+    });
+  },
+
+  hide: function () {
+    this.setState({
+      isOverlayShown: false
+    });
+  },
+
+  toggle: function () {
+    this.setState({
+      isOverlayShown: !this.state.isOverlayShown
+    });
+  },
+
+  renderOverlay: function () {
+    if (!this.state.isOverlayShown) {
+      return React.DOM.span(null );
+    }
+
+    return cloneWithProps(
+      this.props.modal,
+      {
+        onRequestHide: this.hide
+      }
+    );
+  },
+
+  render: function () {
+    var child = React.Children.only(this.props.children);
+    return cloneWithProps(
+      child,
+      {
+        onClick: createChainedFunction(child.props.onClick, this.toggle)
+      }
+    );
+  }
+});
+
+module.exports = ModalTrigger;
+},{"./OverlayMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/OverlayMixin.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js":[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
@@ -568,7 +2572,1443 @@ var Navbar = React.createClass({displayName: 'Navbar',
 
 module.exports = Navbar;
 
-},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Nav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js","./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/constants.js":[function(require,module,exports){
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Nav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js","./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/OverlayMixin.js":[function(require,module,exports){
+var React = require('react');
+var CustomPropTypes = require('./utils/CustomPropTypes');
+
+module.exports = {
+  propTypes: {
+    container: CustomPropTypes.mountable
+  },
+
+  getDefaultProps: function () {
+    return {
+      container: {
+        // Provide `getDOMNode` fn mocking a React component API. The `document.body`
+        // reference needs to be contained within this function so that it is not accessed
+        // in environments where it would not be defined, e.g. nodejs. Equally this is needed
+        // before the body is defined where `document.body === null`, this ensures
+        // `document.body` is only accessed after componentDidMount.
+        getDOMNode: function getDOMNode() {
+          return document.body;
+        }
+      }
+    };
+  },
+
+  componentWillUnmount: function () {
+    this._unrenderOverlay();
+    if (this._overlayTarget) {
+      this.getContainerDOMNode()
+        .removeChild(this._overlayTarget);
+      this._overlayTarget = null;
+    }
+  },
+
+  componentDidUpdate: function () {
+    this._renderOverlay();
+  },
+
+  componentDidMount: function () {
+    this._renderOverlay();
+  },
+
+  _mountOverlayTarget: function () {
+    this._overlayTarget = document.createElement('div');
+    this.getContainerDOMNode()
+      .appendChild(this._overlayTarget);
+  },
+
+  _renderOverlay: function () {
+    if (!this._overlayTarget) {
+      this._mountOverlayTarget();
+    }
+
+    // Save reference to help testing
+    this._overlayInstance = React.renderComponent(this.renderOverlay(), this._overlayTarget);
+  },
+
+  _unrenderOverlay: function () {
+    React.unmountComponentAtNode(this._overlayTarget);
+    this._overlayInstance = null;
+  },
+
+  getOverlayDOMNode: function () {
+    if (!this.isMounted()) {
+      throw new Error('getOverlayDOMNode(): A component must be mounted to have a DOM node.');
+    }
+
+    return this._overlayInstance.getDOMNode();
+  },
+
+  getContainerDOMNode: function () {
+    return this.props.container.getDOMNode ?
+      this.props.container.getDOMNode() : this.props.container;
+  }
+};
+
+},{"./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/OverlayTrigger.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var OverlayMixin = require('./OverlayMixin');
+var domUtils = require('./utils/domUtils');
+var cloneWithProps = require('./utils/cloneWithProps');
+var createChainedFunction = require('./utils/createChainedFunction');
+var merge = require('./utils/merge');
+
+/**
+ * Check if value one is inside or equal to the of value
+ *
+ * @param {string} one
+ * @param {string|array} of
+ * @returns {boolean}
+ */
+function isOneOf(one, of) {
+  if (Array.isArray(of)) {
+    return of.indexOf(one) >= 0;
+  }
+  return one === of;
+}
+
+var OverlayTrigger = React.createClass({displayName: 'OverlayTrigger',
+  mixins: [OverlayMixin],
+
+  propTypes: {
+    trigger: React.PropTypes.oneOfType([
+      React.PropTypes.oneOf(['manual', 'click', 'hover', 'focus']),
+      React.PropTypes.arrayOf(React.PropTypes.oneOf(['click', 'hover', 'focus']))
+    ]),
+    placement: React.PropTypes.oneOf(['top','right', 'bottom', 'left']),
+    delay: React.PropTypes.number,
+    delayShow: React.PropTypes.number,
+    delayHide: React.PropTypes.number,
+    defaultOverlayShown: React.PropTypes.bool,
+    overlay: React.PropTypes.renderable.isRequired
+  },
+
+  getDefaultProps: function () {
+    return {
+      placement: 'right',
+      trigger: ['hover', 'focus']
+    };
+  },
+
+  getInitialState: function () {
+    return {
+      isOverlayShown: this.props.defaultOverlayShown == null ?
+        false : this.props.defaultOverlayShown,
+      overlayLeft: null,
+      overlayTop: null
+    };
+  },
+
+  show: function () {
+    this.setState({
+      isOverlayShown: true
+    }, function() {
+      this.updateOverlayPosition();
+    });
+  },
+
+  hide: function () {
+    this.setState({
+      isOverlayShown: false
+    });
+  },
+
+  toggle: function () {
+    this.state.isOverlayShown ?
+      this.hide() : this.show();
+  },
+
+  renderOverlay: function () {
+    if (!this.state.isOverlayShown) {
+      return React.DOM.span(null );
+    }
+
+    return cloneWithProps(
+      this.props.overlay,
+      {
+        onRequestHide: this.hide,
+        placement: this.props.placement,
+        positionLeft: this.state.overlayLeft,
+        positionTop: this.state.overlayTop
+      }
+    );
+  },
+
+  render: function () {
+    if (this.props.trigger === 'manual') {
+      return React.Children.only(this.props.children);
+    }
+
+    var props = {};
+
+    if (isOneOf('click', this.props.trigger)) {
+      props.onClick = createChainedFunction(this.toggle, this.props.onClick);
+    }
+
+    if (isOneOf('hover', this.props.trigger)) {
+      props.onMouseOver = createChainedFunction(this.handleDelayedShow, this.props.onMouseOver);
+      props.onMouseOut = createChainedFunction(this.handleDelayedHide, this.props.onMouseOut);
+    }
+
+    if (isOneOf('focus', this.props.trigger)) {
+      props.onFocus = createChainedFunction(this.handleDelayedShow, this.props.onFocus);
+      props.onBlur = createChainedFunction(this.handleDelayedHide, this.props.onBlur);
+    }
+
+    return cloneWithProps(
+      React.Children.only(this.props.children),
+      props
+    );
+  },
+
+  componentWillUnmount: function() {
+    clearTimeout(this._hoverDelay);
+  },
+
+  handleDelayedShow: function () {
+    if (this._hoverDelay != null) {
+      clearTimeout(this._hoverDelay);
+      this._hoverDelay = null;
+      return;
+    }
+
+    var delay = this.props.delayShow != null ?
+      this.props.delayShow : this.props.delay;
+
+    if (!delay) {
+      this.show();
+      return;
+    }
+
+    this._hoverDelay = setTimeout(function() {
+      this._hoverDelay = null;
+      this.show();
+    }.bind(this), delay);
+  },
+
+  handleDelayedHide: function () {
+    if (this._hoverDelay != null) {
+      clearTimeout(this._hoverDelay);
+      this._hoverDelay = null;
+      return;
+    }
+
+    var delay = this.props.delayHide != null ?
+      this.props.delayHide : this.props.delay;
+
+    if (!delay) {
+      this.hide();
+      return;
+    }
+
+    this._hoverDelay = setTimeout(function() {
+      this._hoverDelay = null;
+      this.hide();
+    }.bind(this), delay);
+  },
+
+  updateOverlayPosition: function () {
+    if (!this.isMounted()) {
+      return;
+    }
+
+    var pos = this.calcOverlayPosition();
+
+    this.setState({
+      overlayLeft: pos.left,
+      overlayTop: pos.top
+    });
+  },
+
+  calcOverlayPosition: function () {
+    var childOffset = this.getPosition();
+
+    var overlayNode = this.getOverlayDOMNode();
+    var overlayHeight = overlayNode.offsetHeight;
+    var overlayWidth = overlayNode.offsetWidth;
+
+    switch (this.props.placement) {
+      case 'right':
+        return {
+          top: childOffset.top + childOffset.height / 2 - overlayHeight / 2,
+          left: childOffset.left + childOffset.width
+        };
+      case 'left':
+        return {
+          top: childOffset.top + childOffset.height / 2 - overlayHeight / 2,
+          left: childOffset.left - overlayWidth
+        };
+      case 'top':
+        return {
+          top: childOffset.top - overlayHeight,
+          left: childOffset.left + childOffset.width / 2 - overlayWidth / 2
+        };
+      case 'bottom':
+        return {
+          top: childOffset.top + childOffset.height,
+          left: childOffset.left + childOffset.width / 2 - overlayWidth / 2
+        };
+      default:
+        throw new Error('calcOverlayPosition(): No such placement of "' + this.props.placement + '" found.');
+    }
+  },
+
+  getPosition: function () {
+    var node = this.getDOMNode();
+    var container = this.getContainerDOMNode();
+
+    var offset = container.tagName == 'BODY' ?
+      domUtils.getOffset(node) : domUtils.getPosition(node, container);
+
+    return merge(offset, {
+      height: node.offsetHeight,
+      width: node.offsetWidth
+    });
+  }
+});
+
+module.exports = OverlayTrigger;
+},{"./OverlayMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/OverlayMixin.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","./utils/domUtils":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/domUtils.js","./utils/merge":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/merge.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PageHeader.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+
+var PageHeader = React.createClass({displayName: 'PageHeader',
+
+  render: function () {
+    return this.transferPropsTo(
+      React.DOM.div( {className:"page-header"}, 
+        React.DOM.h1(null, this.props.children)
+      )
+    );
+  }
+});
+
+module.exports = PageHeader;
+},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PageItem.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+
+var PageItem = React.createClass({displayName: 'PageItem',
+
+  propTypes: {
+    disabled: React.PropTypes.bool,
+    previous: React.PropTypes.bool,
+    next: React.PropTypes.bool,
+    onSelect: React.PropTypes.func
+  },
+
+  getDefaultProps: function () {
+    return {
+      href: '#'
+    };
+  },
+
+  render: function () {
+    var classes = {
+      'disabled': this.props.disabled,
+      'previous': this.props.previous,
+      'next': this.props.next
+    };
+
+    return this.transferPropsTo(
+      React.DOM.li(
+        {className:classSet(classes)}, 
+        React.DOM.a(
+          {href:this.props.href,
+          title:this.props.title,
+          onClick:this.handleSelect,
+          ref:"anchor"}, 
+          this.props.children
+        )
+      )
+    );
+  },
+
+  handleSelect: function (e) {
+    if (this.props.onSelect) {
+      e.preventDefault();
+
+      if (!this.props.disabled) {
+        this.props.onSelect(this.props.key, this.props.href);
+      }
+    }
+  }
+});
+
+module.exports = PageItem;
+},{"./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Pager.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var cloneWithProps = require('./utils/cloneWithProps');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+var createChainedFunction = require('./utils/createChainedFunction');
+
+var Pager = React.createClass({displayName: 'Pager',
+
+  propTypes: {
+    onSelect: React.PropTypes.func
+  },
+
+  render: function () {
+    return this.transferPropsTo(
+      React.DOM.ul(
+        {className:"pager"}, 
+        ValidComponentChildren.map(this.props.children, this.renderPageItem)
+      )
+    );
+  },
+
+  renderPageItem: function (child) {
+    return cloneWithProps(
+      child,
+      {
+        onSelect: createChainedFunction(child.props.onSelect, this.props.onSelect),
+        ref: child.props.ref,
+        key: child.props.key
+      }
+    );
+  }
+});
+
+module.exports = Pager;
+},{"./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Panel.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var BootstrapMixin = require('./BootstrapMixin');
+var CollapsableMixin = require('./CollapsableMixin');
+
+var Panel = React.createClass({displayName: 'Panel',
+  mixins: [BootstrapMixin, CollapsableMixin],
+
+  propTypes: {
+    onSelect: React.PropTypes.func,
+    header: React.PropTypes.renderable,
+    footer: React.PropTypes.renderable
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'panel',
+      bsStyle: 'default'
+    };
+  },
+
+  handleSelect: function (e) {
+    if (this.props.onSelect) {
+      this._isChanging = true;
+      this.props.onSelect(this.props.key);
+      this._isChanging = false;
+    }
+
+    e.preventDefault();
+
+    this.setState({
+      expanded: !this.state.expanded
+    });
+  },
+
+  shouldComponentUpdate: function () {
+    return !this._isChanging;
+  },
+
+  getCollapsableDimensionValue: function () {
+    return this.refs.body.getDOMNode().offsetHeight;
+  },
+
+  getCollapsableDOMNode: function () {
+    if (!this.isMounted() || !this.refs || !this.refs.panel) {
+      return null;
+    }
+
+    return this.refs.panel.getDOMNode();
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+    classes['panel'] = true;
+
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(classes), id:this.props.collapsable ? null : this.props.id, onSelect:null}, 
+        this.renderHeading(),
+        this.props.collapsable ? this.renderCollapsableBody() : this.renderBody(),
+        this.renderFooter()
+      )
+    );
+  },
+
+  renderCollapsableBody: function () {
+    return (
+      React.DOM.div( {className:classSet(this.getCollapsableClassSet('panel-collapse')), id:this.props.id, ref:"panel"}, 
+        this.renderBody()
+      )
+    );
+  },
+
+  renderBody: function () {
+    return (
+      React.DOM.div( {className:"panel-body", ref:"body"}, 
+        this.props.children
+      )
+    );
+  },
+
+  renderHeading: function () {
+    var header = this.props.header;
+
+    if (!header) {
+      return null;
+    }
+
+    if (!React.isValidComponent(header) || Array.isArray(header)) {
+      header = this.props.collapsable ?
+        this.renderCollapsableTitle(header) : header;
+    } else if (this.props.collapsable) {
+      header = cloneWithProps(header, {
+        className: 'panel-title',
+        children: this.renderAnchor(header.props.children)
+      });
+    } else {
+      header = cloneWithProps(header, {
+        className: 'panel-title'
+      });
+    }
+
+    return (
+      React.DOM.div( {className:"panel-heading"}, 
+        header
+      )
+    );
+  },
+
+  renderAnchor: function (header) {
+    return (
+      React.DOM.a(
+        {href:'#' + (this.props.id || ''),
+        className:this.isExpanded() ? null : 'collapsed',
+        onClick:this.handleSelect}, 
+        header
+      )
+    );
+  },
+
+  renderCollapsableTitle: function (header) {
+    return (
+      React.DOM.h4( {className:"panel-title"}, 
+        this.renderAnchor(header)
+      )
+    );
+  },
+
+  renderFooter: function () {
+    if (!this.props.footer) {
+      return null;
+    }
+
+    return (
+      React.DOM.div( {className:"panel-footer"}, 
+        this.props.footer
+      )
+    );
+  }
+});
+
+module.exports = Panel;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./CollapsableMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/CollapsableMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PanelGroup.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var BootstrapMixin = require('./BootstrapMixin');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+var PanelGroup = React.createClass({displayName: 'PanelGroup',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    collapsable: React.PropTypes.bool,
+    activeKey: React.PropTypes.any,
+    defaultActiveKey: React.PropTypes.any,
+    onSelect: React.PropTypes.func
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'panel-group'
+    };
+  },
+
+  getInitialState: function () {
+    var defaultActiveKey = this.props.defaultActiveKey;
+
+    return {
+      activeKey: defaultActiveKey
+    };
+  },
+
+  render: function () {
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(this.getBsClassSet()), onSelect:null}, 
+        ValidComponentChildren.map(this.props.children, this.renderPanel)
+      )
+    );
+  },
+
+  renderPanel: function (child) {
+    var activeKey =
+      this.props.activeKey != null ? this.props.activeKey : this.state.activeKey;
+
+    var props = {
+      bsStyle: child.props.bsStyle || this.props.bsStyle,
+      key: child.props.key,
+      ref: child.props.ref
+    };
+
+    if (this.props.accordion) {
+      props.collapsable = true;
+      props.expanded = (child.props.key === activeKey);
+      props.onSelect = this.handleSelect;
+    }
+
+    return cloneWithProps(
+      child,
+      props
+    );
+  },
+
+  shouldComponentUpdate: function() {
+    // Defer any updates to this component during the `onSelect` handler.
+    return !this._isChanging;
+  },
+
+  handleSelect: function (key) {
+    if (this.props.onSelect) {
+      this._isChanging = true;
+      this.props.onSelect(key);
+      this._isChanging = false;
+    }
+
+    if (this.state.activeKey === key) {
+      key = null;
+    }
+
+    this.setState({
+      activeKey: key
+    });
+  }
+});
+
+module.exports = PanelGroup;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Popover.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+
+
+var Popover = React.createClass({displayName: 'Popover',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    placement: React.PropTypes.oneOf(['top','right', 'bottom', 'left']),
+    positionLeft: React.PropTypes.number,
+    positionTop: React.PropTypes.number,
+    arrowOffsetLeft: React.PropTypes.number,
+    arrowOffsetTop: React.PropTypes.number,
+    title: React.PropTypes.renderable
+  },
+
+  getDefaultProps: function () {
+    return {
+      placement: 'right'
+    };
+  },
+
+  render: function () {
+    var classes = {};
+    classes['popover'] = true;
+    classes[this.props.placement] = true;
+    classes['in'] = this.props.positionLeft != null || this.props.positionTop != null;
+
+    var style = {};
+    style['left'] = this.props.positionLeft;
+    style['top'] = this.props.positionTop;
+    style['display'] = 'block';
+
+    var arrowStyle = {};
+    arrowStyle['left'] = this.props.arrowOffsetLeft;
+    arrowStyle['top'] = this.props.arrowOffsetTop;
+
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(classes), style:style, title:null}, 
+        React.DOM.div( {className:"arrow", style:arrowStyle} ),
+        this.props.title ? this.renderTitle() : null,
+        React.DOM.div( {className:"popover-content"}, 
+          this.props.children
+        )
+      )
+    );
+  },
+
+  renderTitle: function() {
+    return (
+      React.DOM.h3( {className:"popover-title"}, this.props.title)
+    );
+  }
+});
+
+module.exports = Popover;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ProgressBar.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var Interpolate = require('./Interpolate');
+var BootstrapMixin = require('./BootstrapMixin');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+
+
+var ProgressBar = React.createClass({displayName: 'ProgressBar',
+  propTypes: {
+    min: React.PropTypes.number,
+    now: React.PropTypes.number,
+    max: React.PropTypes.number,
+    label: React.PropTypes.renderable,
+    srOnly: React.PropTypes.bool,
+    striped: React.PropTypes.bool,
+    active: React.PropTypes.bool
+  },
+
+  mixins: [BootstrapMixin],
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'progress-bar',
+      min: 0,
+      max: 100
+    };
+  },
+
+  getPercentage: function (now, min, max) {
+    return Math.ceil((now - min) / (max - min) * 100);
+  },
+
+  render: function () {
+    var classes = {
+        progress: true
+      };
+
+    if (this.props.active) {
+      classes['progress-striped'] = true;
+      classes['active'] = true;
+    } else if (this.props.striped) {
+      classes['progress-striped'] = true;
+    }
+
+    if (!ValidComponentChildren.hasValidComponent(this.props.children)) {
+      if (!this.props.isChild) {
+        return this.transferPropsTo(
+          React.DOM.div( {className:classSet(classes)}, 
+            this.renderProgressBar()
+          )
+        );
+      } else {
+        return this.transferPropsTo(
+          this.renderProgressBar()
+        );
+      }
+    } else {
+      return this.transferPropsTo(
+        React.DOM.div( {className:classSet(classes)}, 
+          ValidComponentChildren.map(this.props.children, this.renderChildBar)
+        )
+      );
+    }
+  },
+
+  renderChildBar: function (child) {
+    return cloneWithProps(child, {
+      isChild: true,
+      key: child.props.key,
+      ref: child.props.ref
+    });
+  },
+
+  renderProgressBar: function () {
+    var percentage = this.getPercentage(
+        this.props.now,
+        this.props.min,
+        this.props.max
+      );
+
+    var label;
+
+    if (typeof this.props.label === "string") {
+      label = this.renderLabel(percentage);
+    } else if (this.props.label) {
+      label = this.props.label;
+    }
+
+    if (this.props.srOnly) {
+      label = this.renderScreenReaderOnlyLabel(label);
+    }
+
+    return (
+      React.DOM.div( {className:classSet(this.getBsClassSet()), role:"progressbar",
+        style:{width: percentage + '%'},
+        'aria-valuenow':this.props.now,
+        'aria-valuemin':this.props.min,
+        'aria-valuemax':this.props.max}, 
+        label
+      )
+    );
+  },
+
+  renderLabel: function (percentage) {
+    var InterpolateClass = this.props.interpolateClass || Interpolate;
+
+    return (
+      InterpolateClass(
+        {now:this.props.now,
+        min:this.props.min,
+        max:this.props.max,
+        percent:percentage,
+        bsStyle:this.props.bsStyle}, 
+        this.props.label
+      )
+    );
+  },
+
+  renderScreenReaderOnlyLabel: function (label) {
+    return (
+      React.DOM.span( {className:"sr-only"}, 
+        label
+      )
+    );
+  }
+});
+
+module.exports = ProgressBar;
+
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Interpolate":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Interpolate.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Row.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var CustomPropTypes = require('./utils/CustomPropTypes');
+
+
+var Row = React.createClass({displayName: 'Row',
+  propTypes: {
+    componentClass: CustomPropTypes.componentClass.isRequired
+  },
+
+  getDefaultProps: function () {
+    return {
+      componentClass: React.DOM.div
+    };
+  },
+
+  render: function () {
+    var componentClass = this.props.componentClass;
+
+    return this.transferPropsTo(
+      componentClass( {className:"row"}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Row;
+},{"./utils/CustomPropTypes":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/SplitButton.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+var DropdownStateMixin = require('./DropdownStateMixin');
+var Button = require('./Button');
+var ButtonGroup = require('./ButtonGroup');
+var DropdownMenu = require('./DropdownMenu');
+
+var SplitButton = React.createClass({displayName: 'SplitButton',
+  mixins: [BootstrapMixin, DropdownStateMixin],
+
+  propTypes: {
+    pullRight:     React.PropTypes.bool,
+    title:         React.PropTypes.renderable,
+    href:          React.PropTypes.string,
+    dropdownTitle: React.PropTypes.renderable,
+    onClick:       React.PropTypes.func,
+    onSelect:      React.PropTypes.func,
+    disabled:      React.PropTypes.bool
+  },
+
+  getDefaultProps: function () {
+    return {
+      dropdownTitle: 'Toggle dropdown'
+    };
+  },
+
+  render: function () {
+    var groupClasses = {
+        'open': this.state.open,
+        'dropup': this.props.dropup
+      };
+
+    var button = this.transferPropsTo(
+      Button(
+        {ref:"button",
+        onClick:this.handleButtonClick,
+        title:null,
+        id:null}, 
+        this.props.title
+      )
+    );
+
+    var dropdownButton = this.transferPropsTo(
+      Button(
+        {ref:"dropdownButton",
+        className:"dropdown-toggle",
+        onClick:this.handleDropdownClick,
+        title:null,
+        id:null}, 
+        React.DOM.span( {className:"sr-only"}, this.props.dropdownTitle),
+        React.DOM.span( {className:"caret"} )
+      )
+    );
+
+    return (
+      ButtonGroup(
+        {bsSize:this.props.bsSize,
+        className:classSet(groupClasses),
+        id:this.props.id}, 
+        button,
+        dropdownButton,
+        DropdownMenu(
+          {ref:"menu",
+          onSelect:this.handleOptionSelect,
+          'aria-labelledby':this.props.id,
+          pullRight:this.props.pullRight}, 
+          this.props.children
+        )
+      )
+    );
+  },
+
+  handleButtonClick: function (e) {
+    if (this.state.open) {
+      this.setDropdownState(false);
+    }
+
+    if (this.props.onClick) {
+      this.props.onClick(e);
+    }
+  },
+
+  handleDropdownClick: function (e) {
+    e.preventDefault();
+
+    this.setDropdownState(!this.state.open);
+  },
+
+  handleOptionSelect: function (key) {
+    if (this.props.onSelect) {
+      this.props.onSelect(key);
+    }
+
+    this.setDropdownState(false);
+  }
+});
+
+module.exports = SplitButton;
+
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Button":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js","./ButtonGroup":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ButtonGroup.js","./DropdownMenu":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownMenu.js","./DropdownStateMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownStateMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/SubNav.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var cloneWithProps = require('./utils/cloneWithProps');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+var createChainedFunction = require('./utils/createChainedFunction');
+var BootstrapMixin = require('./BootstrapMixin');
+
+
+var SubNav = React.createClass({displayName: 'SubNav',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    onSelect: React.PropTypes.func,
+    active: React.PropTypes.bool,
+    disabled: React.PropTypes.bool,
+    href: React.PropTypes.string,
+    title: React.PropTypes.string,
+    text: React.PropTypes.renderable
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'nav'
+    };
+  },
+
+  handleClick: function (e) {
+    if (this.props.onSelect) {
+      e.preventDefault();
+
+      if (!this.props.disabled) {
+        this.props.onSelect(this.props.key, this.props.href);
+      }
+    }
+  },
+
+  isActive: function () {
+    return this.isChildActive(this);
+  },
+
+  isChildActive: function (child) {
+    if (child.props.active) {
+      return true;
+    }
+
+    if (this.props.activeKey != null && this.props.activeKey === child.props.key) {
+      return true;
+    }
+
+    if (this.props.activeHref != null && this.props.activeHref === child.props.href) {
+      return true;
+    }
+
+    if (child.props.children) {
+      var isActive = false;
+
+      ValidComponentChildren.forEach(
+        child.props.children,
+        function (child) {
+          if (this.isChildActive(child)) {
+            isActive = true;
+          }
+        },
+        this
+      );
+
+      return isActive;
+    }
+
+    return false;
+  },
+
+  getChildActiveProp: function (child) {
+    if (child.props.active) {
+      return true;
+    }
+    if (this.props.activeKey != null) {
+      if (child.props.key === this.props.activeKey) {
+        return true;
+      }
+    }
+    if (this.props.activeHref != null) {
+      if (child.props.href === this.props.activeHref) {
+        return true;
+      }
+    }
+
+    return child.props.active;
+  },
+
+  render: function () {
+    var classes = {
+      'active': this.isActive(),
+      'disabled': this.props.disabled
+    };
+
+    return this.transferPropsTo(
+      React.DOM.li( {className:classSet(classes)}, 
+        React.DOM.a(
+          {href:this.props.href,
+          title:this.props.title,
+          onClick:this.handleClick,
+          ref:"anchor"}, 
+          this.props.text
+        ),
+        React.DOM.ul( {className:"nav"}, 
+          ValidComponentChildren.map(this.props.children, this.renderNavItem)
+        )
+      )
+    );
+  },
+
+  renderNavItem: function (child) {
+    return cloneWithProps(
+      child,
+      {
+        active: this.getChildActiveProp(child),
+        onSelect: createChainedFunction(child.props.onSelect, this.props.onSelect),
+        ref: child.props.ref,
+        key: child.props.key
+      }
+    );
+  }
+});
+
+module.exports = SubNav;
+
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","./utils/createChainedFunction":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/createChainedFunction.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/TabPane.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var TransitionEvents = require('./utils/TransitionEvents');
+
+var TabPane = React.createClass({displayName: 'TabPane',
+  getDefaultProps: function () {
+    return {
+      animation: true
+    };
+  },
+
+  getInitialState: function () {
+    return {
+      animateIn: false,
+      animateOut: false
+    };
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    if (this.props.animation) {
+      if (!this.state.animateIn && nextProps.active && !this.props.active) {
+        this.setState({
+          animateIn: true
+        });
+      } else if (!this.state.animateOut && !nextProps.active && this.props.active) {
+        this.setState({
+          animateOut: true
+        });
+      }
+    }
+  },
+
+  componentDidUpdate: function () {
+    if (this.state.animateIn) {
+      setTimeout(this.startAnimateIn, 0);
+    }
+    if (this.state.animateOut) {
+      TransitionEvents.addEndEventListener(
+        this.getDOMNode(),
+        this.stopAnimateOut
+      );
+    }
+  },
+
+  startAnimateIn: function () {
+    if (this.isMounted()) {
+      this.setState({
+        animateIn: false
+      });
+    }
+  },
+
+  stopAnimateOut: function () {
+    if (this.isMounted()) {
+      this.setState({
+        animateOut: false
+      });
+
+      if (typeof this.props.onAnimateOutEnd === 'function') {
+        this.props.onAnimateOutEnd();
+      }
+    }
+  },
+
+  render: function () {
+    var classes = {
+      'tab-pane': true,
+      'fade': true,
+      'active': this.props.active || this.state.animateOut,
+      'in': this.props.active && !this.state.animateIn
+    };
+
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = TabPane;
+},{"./utils/TransitionEvents":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/TransitionEvents.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/TabbedArea.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var BootstrapMixin = require('./BootstrapMixin');
+var cloneWithProps = require('./utils/cloneWithProps');
+var ValidComponentChildren = require('./utils/ValidComponentChildren');
+var Nav = require('./Nav');
+var NavItem = require('./NavItem');
+
+function getDefaultActiveKeyFromChildren(children) {
+  var defaultActiveKey;
+
+  ValidComponentChildren.forEach(children, function(child) {
+    if (defaultActiveKey == null) {
+      defaultActiveKey = child.props.key;
+    }
+  });
+
+  return defaultActiveKey;
+}
+
+var TabbedArea = React.createClass({displayName: 'TabbedArea',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    bsStyle: React.PropTypes.oneOf(['tabs','pills']),
+    animation: React.PropTypes.bool,
+    onSelect: React.PropTypes.func
+  },
+
+  getDefaultProps: function () {
+    return {
+      bsStyle: "tabs",
+      animation: true
+    };
+  },
+
+  getInitialState: function () {
+    var defaultActiveKey = this.props.defaultActiveKey != null ?
+      this.props.defaultActiveKey : getDefaultActiveKeyFromChildren(this.props.children);
+
+    // TODO: In __DEV__ mode warn via `console.warn` if no `defaultActiveKey` has
+    // been set by this point, invalid children or missing key properties are likely the cause.
+
+    return {
+      activeKey: defaultActiveKey,
+      previousActiveKey: null
+    };
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    if (nextProps.activeKey != null && nextProps.activeKey !== this.props.activeKey) {
+      this.setState({
+        previousActiveKey: this.props.activeKey
+      });
+    }
+  },
+
+  handlePaneAnimateOutEnd: function () {
+    this.setState({
+      previousActiveKey: null
+    });
+  },
+
+  render: function () {
+    var activeKey =
+      this.props.activeKey != null ? this.props.activeKey : this.state.activeKey;
+
+    function renderTabIfSet(child) {
+      return child.props.tab != null ? this.renderTab(child) : null;
+    }
+
+    var nav = this.transferPropsTo(
+      Nav( {activeKey:activeKey, onSelect:this.handleSelect, ref:"tabs"}, 
+        ValidComponentChildren.map(this.props.children, renderTabIfSet, this)
+      )
+    );
+
+    return (
+      React.DOM.div(null, 
+        nav,
+        React.DOM.div( {id:this.props.id, className:"tab-content", ref:"panes"}, 
+          ValidComponentChildren.map(this.props.children, this.renderPane)
+        )
+      )
+    );
+  },
+
+  getActiveKey: function () {
+    return this.props.activeKey != null ? this.props.activeKey : this.state.activeKey;
+  },
+
+  renderPane: function (child) {
+    var activeKey = this.getActiveKey();
+
+    return cloneWithProps(
+        child,
+        {
+          active: (child.props.key === activeKey &&
+            (this.state.previousActiveKey == null || !this.props.animation)),
+          ref: child.props.ref,
+          key: child.props.key,
+          animation: this.props.animation,
+          onAnimateOutEnd: (this.state.previousActiveKey != null &&
+            child.props.key === this.state.previousActiveKey) ? this.handlePaneAnimateOutEnd: null
+        }
+      );
+  },
+
+  renderTab: function (child) {
+    var key = child.props.key;
+    return (
+      NavItem(
+        {ref:'tab' + key,
+        key:key}, 
+        child.props.tab
+      )
+    );
+  },
+
+  shouldComponentUpdate: function() {
+    // Defer any updates to this component during the `onSelect` handler.
+    return !this._isChanging;
+  },
+
+  handleSelect: function (key) {
+    if (this.props.onSelect) {
+      this._isChanging = true;
+      this.props.onSelect(key);
+      this._isChanging = false;
+    } else if (key !== this.getActiveKey()) {
+      this.setState({
+        activeKey: key,
+        previousActiveKey: this.getActiveKey()
+      });
+    }
+  }
+});
+
+module.exports = TabbedArea;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Nav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js","./NavItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/NavItem.js","./utils/ValidComponentChildren":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/ValidComponentChildren.js","./utils/cloneWithProps":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/cloneWithProps.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Table.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+
+var Table = React.createClass({displayName: 'Table',
+  propTypes: {
+    striped: React.PropTypes.bool,
+    bordered: React.PropTypes.bool,
+    condensed: React.PropTypes.bool,
+    hover: React.PropTypes.bool,
+    responsive: React.PropTypes.bool
+  },
+
+  render: function () {
+    var classes = {
+      'table': true,
+      'table-striped': this.props.striped,
+      'table-bordered': this.props.bordered,
+      'table-condensed': this.props.condensed,
+      'table-hover': this.props.hover
+    };
+    var table = this.transferPropsTo(
+      React.DOM.table( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+
+    return this.props.responsive ? (
+      React.DOM.div( {className:"table-responsive"}, 
+        table
+      )
+    ) : table;
+  }
+});
+
+module.exports = Table;
+},{"./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Tooltip.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+
+
+var Tooltip = React.createClass({displayName: 'Tooltip',
+  mixins: [BootstrapMixin],
+
+  propTypes: {
+    placement: React.PropTypes.oneOf(['top','right', 'bottom', 'left']),
+    positionLeft: React.PropTypes.number,
+    positionTop: React.PropTypes.number,
+    arrowOffsetLeft: React.PropTypes.number,
+    arrowOffsetTop: React.PropTypes.number
+  },
+
+  getDefaultProps: function () {
+    return {
+      placement: 'right'
+    };
+  },
+
+  render: function () {
+    var classes = {};
+    classes['tooltip'] = true;
+    classes[this.props.placement] = true;
+    classes['in'] = this.props.positionLeft != null || this.props.positionTop != null;
+
+    var style = {};
+    style['left'] = this.props.positionLeft;
+    style['top'] = this.props.positionTop;
+
+    var arrowStyle = {};
+    arrowStyle['left'] = this.props.arrowOffsetLeft;
+    arrowStyle['top'] = this.props.arrowOffsetTop;
+
+    return this.transferPropsTo(
+        React.DOM.div( {className:classSet(classes), style:style}, 
+          React.DOM.div( {className:"tooltip-arrow", style:arrowStyle} ),
+          React.DOM.div( {className:"tooltip-inner"}, 
+            this.props.children
+          )
+        )
+      );
+  }
+});
+
+module.exports = Tooltip;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Well.js":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+var classSet = require('./utils/classSet');
+var BootstrapMixin = require('./BootstrapMixin');
+
+var Well = React.createClass({displayName: 'Well',
+  mixins: [BootstrapMixin],
+
+  getDefaultProps: function () {
+    return {
+      bsClass: 'well'
+    };
+  },
+
+  render: function () {
+    var classes = this.getBsClassSet();
+
+    return this.transferPropsTo(
+      React.DOM.div( {className:classSet(classes)}, 
+        this.props.children
+      )
+    );
+  }
+});
+
+module.exports = Well;
+},{"./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./utils/classSet":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/classSet.js","react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/constants.js":[function(require,module,exports){
 module.exports = {
   CLASSES: {
     'alert': 'alert',
@@ -812,7 +4252,59 @@ module.exports = {
   ]
 };
 
-},{}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js":[function(require,module,exports){
+},{}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/main.js":[function(require,module,exports){
+module.exports = {
+  Accordion: require('./Accordion'),
+  Affix: require('./Affix'),
+  AffixMixin: require('./AffixMixin'),
+  Alert: require('./Alert'),
+  BootstrapMixin: require('./BootstrapMixin'),
+  Badge: require('./Badge'),
+  Button: require('./Button'),
+  ButtonGroup: require('./ButtonGroup'),
+  ButtonToolbar: require('./ButtonToolbar'),
+  Carousel: require('./Carousel'),
+  CarouselItem: require('./CarouselItem'),
+  Col: require('./Col'),
+  CollapsableMixin: require('./CollapsableMixin'),
+  DropdownButton: require('./DropdownButton'),
+  DropdownMenu: require('./DropdownMenu'),
+  DropdownStateMixin: require('./DropdownStateMixin'),
+  FadeMixin: require('./FadeMixin'),
+  Glyphicon: require('./Glyphicon'),
+  Grid: require('./Grid'),
+  Input: require('./Input'),
+  Interpolate: require('./Interpolate'),
+  Jumbotron: require('./Jumbotron'),
+  Label: require('./Label'),
+  ListGroup: require('./ListGroup'),
+  ListGroupItem: require('./ListGroupItem'),
+  MenuItem: require('./MenuItem'),
+  Modal: require('./Modal'),
+  Nav: require('./Nav'),
+  Navbar: require('./Navbar'),
+  NavItem: require('./NavItem'),
+  ModalTrigger: require('./ModalTrigger'),
+  OverlayTrigger: require('./OverlayTrigger'),
+  OverlayMixin: require('./OverlayMixin'),
+  PageHeader: require('./PageHeader'),
+  Panel: require('./Panel'),
+  PanelGroup: require('./PanelGroup'),
+  PageItem: require('./PageItem'),
+  Pager: require('./Pager'),
+  Popover: require('./Popover'),
+  ProgressBar: require('./ProgressBar'),
+  Row: require('./Row'),
+  SplitButton: require('./SplitButton'),
+  SubNav: require('./SubNav'),
+  TabbedArea: require('./TabbedArea'),
+  Table: require('./Table'),
+  TabPane: require('./TabPane'),
+  Tooltip: require('./Tooltip'),
+  Well: require('./Well')
+};
+
+},{"./Accordion":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Accordion.js","./Affix":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Affix.js","./AffixMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/AffixMixin.js","./Alert":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Alert.js","./Badge":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Badge.js","./BootstrapMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/BootstrapMixin.js","./Button":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Button.js","./ButtonGroup":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ButtonGroup.js","./ButtonToolbar":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ButtonToolbar.js","./Carousel":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Carousel.js","./CarouselItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/CarouselItem.js","./Col":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Col.js","./CollapsableMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/CollapsableMixin.js","./DropdownButton":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownButton.js","./DropdownMenu":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownMenu.js","./DropdownStateMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/DropdownStateMixin.js","./FadeMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/FadeMixin.js","./Glyphicon":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Glyphicon.js","./Grid":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Grid.js","./Input":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Input.js","./Interpolate":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Interpolate.js","./Jumbotron":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Jumbotron.js","./Label":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Label.js","./ListGroup":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ListGroup.js","./ListGroupItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ListGroupItem.js","./MenuItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/MenuItem.js","./Modal":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Modal.js","./ModalTrigger":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ModalTrigger.js","./Nav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js","./NavItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/NavItem.js","./Navbar":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Navbar.js","./OverlayMixin":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/OverlayMixin.js","./OverlayTrigger":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/OverlayTrigger.js","./PageHeader":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PageHeader.js","./PageItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PageItem.js","./Pager":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Pager.js","./Panel":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Panel.js","./PanelGroup":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/PanelGroup.js","./Popover":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Popover.js","./ProgressBar":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/ProgressBar.js","./Row":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Row.js","./SplitButton":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/SplitButton.js","./SubNav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/SubNav.js","./TabPane":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/TabPane.js","./TabbedArea":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/TabbedArea.js","./Table":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Table.js","./Tooltip":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Tooltip.js","./Well":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Well.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/CustomPropTypes.js":[function(require,module,exports){
 var React = require('react');
 
 var ANONYMOUS = '<<anonymous>>';
@@ -898,7 +4390,54 @@ function createMountableChecker() {
 }
 
 module.exports = CustomPropTypes;
-},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/TransitionEvents.js":[function(require,module,exports){
+},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/EventListener.js":[function(require,module,exports){
+/**
+ * React EventListener.listen
+ *
+ * Copyright 2013-2014 Facebook, Inc.
+ * @licence https://github.com/facebook/react/blob/0.11-stable/LICENSE
+ *
+ * This file contains a modified version of:
+ *  https://github.com/facebook/react/blob/0.11-stable/src/vendor/stubs/EventListener.js
+ *
+ * TODO: remove in favour of solution provided by:
+ *  https://github.com/facebook/react/issues/285
+ */
+
+/**
+ * Does not take into account specific nature of platform.
+ */
+var EventListener = {
+  /**
+   * Listen to DOM events during the bubble phase.
+   *
+   * @param {DOMEventTarget} target DOM element to register listener on.
+   * @param {string} eventType Event type, e.g. 'click' or 'mouseover'.
+   * @param {function} callback Callback function.
+   * @return {object} Object with a `remove` method.
+   */
+  listen: function(target, eventType, callback) {
+    if (target.addEventListener) {
+      target.addEventListener(eventType, callback, false);
+      return {
+        remove: function() {
+          target.removeEventListener(eventType, callback, false);
+        }
+      };
+    } else if (target.attachEvent) {
+      target.attachEvent('on' + eventType, callback);
+      return {
+        remove: function() {
+          target.detachEvent('on' + eventType, callback);
+        }
+      };
+    }
+  }
+};
+
+module.exports = EventListener;
+
+},{}],"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/utils/TransitionEvents.js":[function(require,module,exports){
 /**
  * React TransitionEvents
  *
@@ -20077,9 +23616,11 @@ module.exports = warning;
 module.exports = require('./lib/React');
 
 },{"./lib/React":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/lib/React.js"}],"/Users/cultofmetatron/projects/hackerhousing/frontend/src/js/views/menu.jsx":[function(require,module,exports){
-/** @jsx React.DOM */
+/** 
+* @jsx React.DOM 
+* */
 var React = require('react');
-
+var rbt = require('react-bootstrap');
 var links = [
   {name: 'home', src:"/home"},
   {name: 'about', src:"/about"}
@@ -20089,21 +23630,30 @@ var links = [
 var Navbar = require('react-bootstrap/Navbar');
 var Nav = require('react-bootstrap/Nav');
 var NavItem = require('react-bootstrap/NavItem');
-//var Nav, Navbar, NavItem
+var DropdownButton = require('react-bootstrap/Dropdownbutton')
+var MenuItem = require('react-bootstrap/MenuItem')
+
 
 var menu = React.createClass({displayName: 'menu',
   render: function() {
     return (
-      Navbar(null, 
-        Nav(null, 
-          NavItem({key: 1, href: "#"}, "Link 1"), 
-          NavItem({key: 2, href: "#"}, "Link 2")
+     Navbar(null, 
+      Nav(null, 
+        NavItem({key: 1, href: "#"}, "Link"), 
+        NavItem({key: 2, href: "#"}, "Link ", React.DOM.i({className: "fa fa-bicycle"})), 
+        DropdownButton({key: 3, title: "Dropdown"}, 
+          MenuItem({key: "1"}, "Action"), 
+          MenuItem({key: "2"}, "Another action"), 
+          MenuItem({key: "3"}, "Something else here "), 
+          MenuItem({divider: true}), 
+          MenuItem({key: "4"}, "Separated link")
         )
       )
+     )    
     );
   }
 })
 
 module.exports = menu;
 
-},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js","react-bootstrap/Nav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js","react-bootstrap/NavItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/NavItem.js","react-bootstrap/Navbar":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Navbar.js"}]},{},["./app.js"]);
+},{"react":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react/react.js","react-bootstrap":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/main.js","react-bootstrap/Dropdownbutton":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Dropdownbutton.js","react-bootstrap/MenuItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/MenuItem.js","react-bootstrap/Nav":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Nav.js","react-bootstrap/NavItem":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/NavItem.js","react-bootstrap/Navbar":"/Users/cultofmetatron/projects/hackerhousing/frontend/node_modules/react-bootstrap/Navbar.js"}]},{},["./app.js"]);

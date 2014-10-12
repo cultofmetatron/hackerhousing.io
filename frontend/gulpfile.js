@@ -106,7 +106,7 @@ gulp.task('serve', serve({
 
 
 
-gulp.task('build', ['less', 'html', 'javascript']);
+gulp.task('build', ['less', 'html', 'js-watch', 'fonts']);
 
 gulp.task('server', ['serve', 'html', 'js-watch', 'less']);
 
