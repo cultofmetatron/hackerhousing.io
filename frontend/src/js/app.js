@@ -1,3 +1,6 @@
-var react = require('react');
-var menu = require('./views/menu.js');
+var React = require('react');
+window.react = React;
+var Menu = require('./views/menu.jsx');
 
+
+React.renderComponent(Menu(), document.getElementById('topnav'))

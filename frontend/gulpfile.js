@@ -2,48 +2,55 @@ var gulp = require("gulp");
 var less = require('gulp-less');
 var path = require('path');
 var jsx = require('gulp-jsx');
-var browserify = require('gulp-browserify');
+var browserifyGulp = require('gulp-browserify');
 var _ = require('lodash');
 var watch = require('gulp-watch');
 var plumber = require('gulp-plumber');
+var browserify = require('browserify');
+var reactify = require('reactify');
+var source = require('vinyl-source-stream');
 
 
-var watcher = function(src, cb) {
+var watcher = function(src, watchsrc, cb) {
+  if (arguments.length == 2) {
+    cb = watchsrc;
+    watchsrc = src;
+  }
+
   return cb(gulp.src(src)
             .pipe(plumber())
-            .pipe(watch(src, cb)));
+            .pipe(watch(watchsrc, cb)));
 }
 
-/*
-var jsTask = function() {
-  var src = 'src/js/app.js';
-  return gulp.src(src)
-    .pipe(watch(src, function(files) {
-      return files.pipe(browserify({
-        transform: ["reactify"],
-      }))
-      .pipe(gulp.dest('./public/js'));
-    }))
-    .pipe(browserify({
-      transform: ["reactify"],
-    }))
-    .pipe(gulp.dest('./public/js'));
-};
-*/
 
 var jsTask = function() {
   var src = 'src/js/app.js';
-  return watcher(src, function(files) {
-    return files.pipe(browserify({
+  var watchsrc = 'src/js/**/*.js';
+  return watcher(src, watchsrc, function(files) {
+    return files.pipe(browserifyGulp({
       transform: ["reactify"],
+      extensions: ['.js', '.jsx']
     }))
     .pipe(gulp.dest('./public/js'));
   });
 };
 
+var jsTask2 = function() {
+  var src = './src/js/app.js';
+  var watchsrc = './src/js/**/*.js';
+  var bundler = browserify(src, {basedir: __dirname})
+  bundler.transform(reactify);
+  var stream = bundler.bundle();
+  return stream
+    .pipe(source('app.js'))
+    .pipe(gulp.dest('./public/js'))
+}
 
-gulp.task('javascript', jsTask);
-
+gulp.task('javascript', jsTask2);
+gulp.task('js-watch', function() {
+  var watchsrc = './src/js/**/*.js';
+  gulp.watch(watchsrc, ['javascript']);
+})
 
 gulp.task('less', function(options) {
   return watcher('./src/styles/stylesheet.less', function(files) {
@@ -85,5 +92,5 @@ gulp.task('serve', serve({
 
 gulp.task('build', ['less', 'html', 'javascript']);
 
-gulp.task('server', ['serve', 'html', 'javascript', 'less']);
+gulp.task('server', ['serve', 'html', 'js-watch', 'less']);
 
