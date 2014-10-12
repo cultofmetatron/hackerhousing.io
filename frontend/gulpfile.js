@@ -2,14 +2,13 @@ var gulp = require("gulp");
 var less = require('gulp-less');
 var path = require('path');
 var jsx = require('gulp-jsx');
-var browserifyGulp = require('gulp-browserify');
 var _ = require('lodash');
 var watch = require('gulp-watch');
 var plumber = require('gulp-plumber');
 var browserify = require('browserify');
 var reactify = require('reactify');
 var source = require('vinyl-source-stream');
-
+var watchify = require('watchify');
 
 var watcher = function(src, watchsrc, cb) {
   if (arguments.length == 2) {
@@ -22,35 +21,52 @@ var watcher = function(src, watchsrc, cb) {
             .pipe(watch(watchsrc, cb)));
 }
 
+var handleError = function() {
+  return function(err) {
+    console.log(err);
+  }
+};
+
+
+function scripts(watch) {
+  var bundler, rebundle;
+  bundler = browserify(['./app.js'], {
+    basedir: path.join(__dirname, 'src', 'js'),
+    cache: {}, // required for watchify
+    packageCache: {}, // required for watchify
+    fullPaths: watch // required to be true only for watchify
+  });
+  if(watch) {
+    bundler = watchify(bundler)
+  }
+ 
+  bundler.transform(reactify);
+  bundler.on('update', rebundle);
+  function rebundle() {
+    console.log('triggering rebundle')
+    return bundler.bundle()
+      .on('error', handleError('Browserify'))
+      .pipe(source('app.js'))
+      .pipe(gulp.dest('./public/js'));
+  };
+ 
+  return rebundle();
+}
 
 var jsTask = function() {
-  var src = 'src/js/app.js';
-  var watchsrc = 'src/js/**/*.js';
-  return watcher(src, watchsrc, function(files) {
-    return files.pipe(browserifyGulp({
-      transform: ["reactify"],
-      extensions: ['.js', '.jsx']
-    }))
-    .pipe(gulp.dest('./public/js'));
-  });
+  return scripts(true);
 };
 
 var jsTask2 = function() {
   var src = './src/js/app.js';
-  var watchsrc = './src/js/**/*.js';
-  var bundler = browserify(src, {basedir: __dirname})
-  bundler.transform(reactify);
-  var stream = bundler.bundle();
-  return stream
-    .pipe(source('app.js'))
-    .pipe(gulp.dest('./public/js'))
+  var watchsrc = ['./src/js/**/*.js','./src/js/**/*.jsx'];
+  return watcher(src, watchsrc, function(files) {
+    //files.
+  })
 }
 
-gulp.task('javascript', jsTask2);
-gulp.task('js-watch', function() {
-  var watchsrc = './src/js/**/*.js';
-  gulp.watch(watchsrc, ['javascript']);
-})
+gulp.task('js-watch', jsTask);
+
 
 gulp.task('less', function(options) {
   return watcher('./src/styles/stylesheet.less', function(files) {
