@@ -9,6 +9,7 @@ var browserify = require('browserify');
 var reactify = require('reactify');
 var source = require('vinyl-source-stream');
 var watchify = require('watchify');
+var livereload = require('gulp-livereload');
 
 var watcher = function(src, watchsrc, cb) {
   if (arguments.length == 2) {
@@ -104,9 +105,14 @@ gulp.task('serve', serve({
   port: 8080
 }));
 
+gulp.task('serve2', function() {
+  livereload.listen();
+  gulp.watch('public/**').on('change', livereload.changed)
+  
+})
 
 
 gulp.task('build', ['less', 'html', 'js-watch', 'fonts']);
 
-gulp.task('server', ['serve', 'html', 'js-watch', 'less']);
+gulp.task('server', ['serve', 'serve2',  'html', 'js-watch', 'less']);
 
