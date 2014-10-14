@@ -26523,7 +26523,7 @@ var menu = React.createClass({displayName: 'menu',
         DropdownButton({key: 3, title: "Dropdown"}, 
           MenuItem({key: "1"}, "Action"), 
           MenuItem({key: "2"}, "Another action"), 
-          MenuItem({key: "3"}, "Something else here "), 
+          MenuItem({key: "3"}, "commit power "), 
           MenuItem({divider: true}), 
           MenuItem({key: "4"}, this.state.date)
         )
