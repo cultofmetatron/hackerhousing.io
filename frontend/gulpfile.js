@@ -11,6 +11,7 @@ var source = require('vinyl-source-stream');
 var watchify = require('watchify');
 var livereload = require('gulp-livereload');
 
+
 var watcher = function(src, watchsrc, cb) {
   if (arguments.length == 2) {
     cb = watchsrc;
@@ -27,6 +28,7 @@ var handleError = function() {
     console.log(err);
   }
 };
+
 
 
 function scripts(watch) {
@@ -66,11 +68,12 @@ var jsTask2 = function() {
   })
 }
 
+
 gulp.task('js-watch', jsTask);
 
 
 gulp.task('less', function(options) {
-  return watcher('./src/styles/stylesheet.less', function(files) {
+  return watcher('./src/styles/stylesheet.less', './src/styles/**/*.less' , function(files) {
     return files
     .pipe(less())
     .pipe(gulp.dest('./public/styles'));
@@ -87,18 +90,19 @@ gulp.task('html', function() {
   }), function(files) {
     return files.pipe(gulp.dest('./public'));
   });
-})
+});
 
 //it just copies shit so we don't really need to run it on fileserves
 gulp.task('fonts', function() {
   return gulp.src('./src/fonts/**/*')
   .pipe(gulp.dest('./public/fonts'))
-})
+});
 
 //watcher
 
 
 //server
+
 var serve = require('gulp-serve');
 gulp.task('serve', serve({
   root: 'public',
@@ -108,11 +112,12 @@ gulp.task('serve', serve({
 gulp.task('serve2', function() {
   livereload.listen();
   gulp.watch('public/**').on('change', livereload.changed)
-  
-})
+});
 
 
 gulp.task('build', ['less', 'html', 'js-watch', 'fonts']);
 
 gulp.task('server', ['serve', 'serve2',  'html', 'js-watch', 'less']);
+gulp.task('default', ['server']);
+
 

@@ -7837,3 +7837,6 @@ button.close {
 .fa-meanpath:before {
   content: "\f20c";
 }
+body {
+  background-color: white;
+}

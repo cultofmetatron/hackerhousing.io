@@ -10,7 +10,7 @@
   "author": "Peter de Croos",
   "license": "ISC",
   "dependencies": {
-    "browserify": "^6.0.3",
+    "browserify": "^6.2.0",
     "faker": "^2.0.1",
     "gulp-browserify": "^0.5.0",
     "gulp-jsx": "^0.5.0",
@@ -20,15 +20,14 @@
     "gulp-serve": "^0.2.0",
     "gulp-watch": "^1.1.0",
     "lodash": "^2.4.1",
+    "material-ui": "^0.2.2",
     "moment": "^2.8.3",
-    "react": "^0.11.2",
-    "react-bootstrap": "^0.12.0",
-    "react-router": "^0.9.3",
-    "react-tools": "^0.11.2",
-    "reactify": "^0.14.0",
-    "rx": "^2.3.13",
+    "react": "^0.12.0",
+    "react-router": "^0.10.2",
+    "reactify": "^0.15.2",
+    "rx": "^2.3.14",
     "vinyl-source-stream": "^1.0.0",
-    "watchify": "^2.0.0"
+    "watchify": "^2.1.0"
   },
   "devDependencies": {
     "express": "^4.9.7",
